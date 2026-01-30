@@ -1,53 +1,124 @@
 package com.example.scamazon_frontend.ui.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+// ===========================================
+// SCAMAZON - MINIMAL THEME
+// Dark Blue + Gold Dark
+// ===========================================
+
+// Light Color Scheme
+private val LightColorScheme = lightColorScheme(
+    // Primary - Dark Blue
+    primary = PrimaryBlue,
+    onPrimary = White,
+    primaryContainer = PrimaryBlueSoft,
+    onPrimaryContainer = PrimaryBlueDark,
+
+    // Secondary - Gold
+    secondary = AccentGold,
+    onSecondary = White,
+    secondaryContainer = AccentGoldSoft,
+    onSecondaryContainer = AccentGold,
+
+    // Tertiary - Gold (accent)
+    tertiary = AccentGold,
+    onTertiary = White,
+    tertiaryContainer = AccentGoldSoft,
+    onTertiaryContainer = AccentGold,
+
+    // Error
+    error = StatusError,
+    onError = White,
+    errorContainer = Burgundy10,
+    onErrorContainer = SecondaryRedDark,
+
+    // Background & Surface
+    background = BackgroundWhite,
+    onBackground = PrimaryBlue,
+    surface = White,
+    onSurface = PrimaryBlue,
+    surfaceVariant = BackgroundLight,
+    onSurfaceVariant = PrimaryBlueLight,
+
+    // Outline
+    outline = BorderDefault,
+    outlineVariant = BorderLight,
+
+    // Inverse
+    inverseSurface = PrimaryBlue,
+    inverseOnSurface = White,
+    inversePrimary = AccentGoldLight
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+// Dark Color Scheme
+private val DarkColorScheme = darkColorScheme(
+    // Primary
+    primary = AccentGoldLight,
+    onPrimary = PrimaryBlueDark,
+    primaryContainer = PrimaryBlue,
+    onPrimaryContainer = BackgroundLight,
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    // Secondary
+    secondary = AccentGold,
+    onSecondary = PrimaryBlueDark,
+    secondaryContainer = PrimaryBlueLight,
+    onSecondaryContainer = White,
+
+    // Tertiary
+    tertiary = AccentGoldLight,
+    onTertiary = PrimaryBlueDark,
+    tertiaryContainer = AccentGold,
+    onTertiaryContainer = White,
+
+    // Error
+    error = StatusError,
+    onError = White,
+    errorContainer = SecondaryRedDark,
+    onErrorContainer = White,
+
+    // Background & Surface
+    background = PrimaryBlueDark,
+    onBackground = White,
+    surface = PrimaryBlue,
+    onSurface = White,
+    surfaceVariant = PrimaryBlueLight,
+    onSurfaceVariant = BackgroundGrey,
+
+    // Outline
+    outline = PrimaryBlueLight,
+    outlineVariant = Navy40,
+
+    // Inverse
+    inverseSurface = White,
+    inverseOnSurface = PrimaryBlue,
+    inversePrimary = PrimaryBlue
 )
 
 @Composable
 fun ScamazonFrontendTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+    // Always use light theme
+    val colorScheme = LightColorScheme
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = BackgroundWhite.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
+        }
     }
 
     MaterialTheme(
