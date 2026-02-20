@@ -21,8 +21,16 @@ import androidx.compose.ui.unit.sp
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
 
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.data.models.auth.RegisterRequest
+import com.example.scamazon_frontend.di.ViewModelFactory
+
 @Composable
 fun RegisterScreen(
+    viewModel: AuthViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateToLogin: () -> Unit = {},
     onNavigateToHome: () -> Unit = {}
 ) {
@@ -38,7 +46,21 @@ fun RegisterScreen(
     var passwordError by remember { mutableStateOf<String?>(null) }
     var confirmPasswordError by remember { mutableStateOf<String?>(null) }
 
-    var isLoading by remember { mutableStateOf(false) }
+    val registerState by viewModel.registerState.collectAsStateWithLifecycle()
+    val isLoading = registerState is Resource.Loading
+    
+    LaunchedEffect(registerState) {
+        when (registerState) {
+            is Resource.Success -> {
+                viewModel.resetState()
+                onNavigateToHome()
+            }
+            is Resource.Error -> {
+                emailError = registerState?.message // Basic error mapping
+            }
+            else -> {}
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -161,19 +183,31 @@ fun RegisterScreen(
                 errorMessage = confirmPasswordError,
                 imeAction = ImeAction.Done,
                 onImeAction = {
-                    performRegistration(
-                        fullName = fullName,
-                        email = email,
-                        phone = phone,
-                        password = password,
-                        confirmPassword = confirmPassword,
-                        onFullNameError = { fullNameError = it },
-                        onEmailError = { emailError = it },
-                        onPhoneError = { phoneError = it },
-                        onPasswordError = { passwordError = it },
-                        onConfirmPasswordError = { confirmPasswordError = it },
-                        onSuccess = onNavigateToHome
-                    )
+                    if (!isLoading) {
+                        performRegistrationValidation(
+                            fullName = fullName,
+                            email = email,
+                            phone = phone,
+                            password = password,
+                            confirmPassword = confirmPassword,
+                            onFullNameError = { fullNameError = it },
+                            onEmailError = { emailError = it },
+                            onPhoneError = { phoneError = it },
+                            onPasswordError = { passwordError = it },
+                            onConfirmPasswordError = { confirmPasswordError = it },
+                            onValid = {
+                                viewModel.register(
+                                    RegisterRequest(
+                                        username = email.substringBefore("@").replace(".", "_"), // basic strategy for username
+                                        email = email,
+                                        password = password,
+                                        fullName = fullName,
+                                        phone = phone.ifBlank { null }
+                                    )
+                                )
+                            }
+                        )
+                    }
                 }
             )
 
@@ -183,7 +217,7 @@ fun RegisterScreen(
             LafyuuPrimaryButton(
                 text = if (isLoading) "Creating Account..." else "Create Account",
                 onClick = {
-                    performRegistration(
+                    performRegistrationValidation(
                         fullName = fullName,
                         email = email,
                         phone = phone,
@@ -194,7 +228,17 @@ fun RegisterScreen(
                         onPhoneError = { phoneError = it },
                         onPasswordError = { passwordError = it },
                         onConfirmPasswordError = { confirmPasswordError = it },
-                        onSuccess = onNavigateToHome
+                        onValid = {
+                            viewModel.register(
+                                RegisterRequest(
+                                    username = email.substringBefore("@").replace(".", "_"),
+                                    email = email,
+                                    password = password,
+                                    fullName = fullName,
+                                    phone = phone.ifBlank { null }
+                                )
+                            )
+                        }
                     )
                 },
                 enabled = !isLoading
@@ -253,7 +297,7 @@ fun RegisterScreen(
     }
 }
 
-private fun performRegistration(
+private fun performRegistrationValidation(
     fullName: String,
     email: String,
     phone: String,
@@ -264,7 +308,7 @@ private fun performRegistration(
     onPhoneError: (String?) -> Unit,
     onPasswordError: (String?) -> Unit,
     onConfirmPasswordError: (String?) -> Unit,
-    onSuccess: () -> Unit
+    onValid: () -> Unit
 ) {
     var isValid = true
 
@@ -321,8 +365,7 @@ private fun performRegistration(
     }
 
     if (isValid) {
-        // TODO: Call API to register
-        onSuccess()
+        onValid()
     }
 }
 

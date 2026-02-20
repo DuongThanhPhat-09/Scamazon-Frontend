@@ -19,3 +19,7 @@ local.properties
 /.idea/misc.xml
 /.idea/codeStyles/
 /.vs/
+
+# Debug Logs
+*.log
+*.txt

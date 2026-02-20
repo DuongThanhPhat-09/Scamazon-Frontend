@@ -17,8 +17,16 @@ import androidx.compose.ui.unit.sp
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
 
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.data.models.auth.LoginRequest
+import com.example.scamazon_frontend.di.ViewModelFactory
+
 @Composable
 fun LoginScreen(
+    viewModel: AuthViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateToRegister: () -> Unit = {},
     onNavigateToHome: () -> Unit = {},
     onNavigateToForgotPassword: () -> Unit = {}
@@ -27,7 +35,22 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
-    var isLoading by remember { mutableStateOf(false) }
+    
+    val loginState by viewModel.loginState.collectAsStateWithLifecycle()
+    val isLoading = loginState is Resource.Loading
+    
+    LaunchedEffect(loginState) {
+        when (loginState) {
+            is Resource.Success -> {
+                viewModel.resetState()
+                onNavigateToHome()
+            }
+            is Resource.Error -> {
+                emailError = loginState?.message
+            }
+            else -> {}
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -102,13 +125,9 @@ fun LoginScreen(
                 errorMessage = passwordError,
                 imeAction = ImeAction.Done,
                 onImeAction = {
-                    performLogin(
-                        email = email,
-                        password = password,
-                        onEmailError = { emailError = it },
-                        onPasswordError = { passwordError = it },
-                        onSuccess = onNavigateToHome
-                    )
+                    if (!isLoading) {
+                        viewModel.login(LoginRequest(email = email, password = password))
+                    }
                 }
             )
 
@@ -129,13 +148,7 @@ fun LoginScreen(
             LafyuuPrimaryButton(
                 text = if (isLoading) "Signing In..." else "Sign In",
                 onClick = {
-                    performLogin(
-                        email = email,
-                        password = password,
-                        onEmailError = { emailError = it },
-                        onPasswordError = { passwordError = it },
-                        onSuccess = onNavigateToHome
-                    )
+                    viewModel.login(LoginRequest(email = email, password = password))
                 },
                 enabled = !isLoading
             )
@@ -193,42 +206,7 @@ fun LoginScreen(
     }
 }
 
-private fun performLogin(
-    email: String,
-    password: String,
-    onEmailError: (String?) -> Unit,
-    onPasswordError: (String?) -> Unit,
-    onSuccess: () -> Unit
-) {
-    var isValid = true
 
-    // Validate email
-    if (email.isBlank()) {
-        onEmailError("Email is required")
-        isValid = false
-    } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-        onEmailError("Please enter a valid email")
-        isValid = false
-    } else {
-        onEmailError(null)
-    }
-
-    // Validate password
-    if (password.isBlank()) {
-        onPasswordError("Password is required")
-        isValid = false
-    } else if (password.length < 6) {
-        onPasswordError("Password must be at least 6 characters")
-        isValid = false
-    } else {
-        onPasswordError(null)
-    }
-
-    if (isValid) {
-        // TODO: Call API to login
-        onSuccess()
-    }
-}
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

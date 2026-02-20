@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,14 +17,28 @@ import androidx.compose.ui.unit.dp
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
 
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.data.models.category.CategoryDto
+import com.example.scamazon_frontend.data.models.product.ProductDto
+import com.example.scamazon_frontend.di.ViewModelFactory
+
 @Composable
 fun HomeScreen(
+    viewModel: HomeViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateToProductDetail: (String) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToWishlist: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    
+    val categoriesState by viewModel.categoriesState.collectAsStateWithLifecycle()
+    val flashSaleState by viewModel.flashSaleState.collectAsStateWithLifecycle()
+    val megaSaleState by viewModel.megaSaleState.collectAsStateWithLifecycle()
+    val recommendedState by viewModel.recommendedState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -65,7 +80,11 @@ fun HomeScreen(
                     onSeeAllClick = { /* Navigate to categories */ }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                CategoriesRow()
+                when (categoriesState) {
+                    is Resource.Loading -> CircularProgressIndicator(modifier = Modifier.padding(Dimens.ScreenPadding))
+                    is Resource.Success -> CategoriesRow(categoriesState.data ?: emptyList())
+                    is Resource.Error -> Text("Error loading categories", modifier = Modifier.padding(Dimens.ScreenPadding))
+                }
             }
 
             // Flash Sale Section
@@ -76,7 +95,11 @@ fun HomeScreen(
                     onSeeAllClick = { /* Navigate to flash sale */ }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                ProductsRow(onProductClick = onNavigateToProductDetail)
+                when (flashSaleState) {
+                    is Resource.Loading -> CircularProgressIndicator(modifier = Modifier.padding(Dimens.ScreenPadding))
+                    is Resource.Success -> ProductsRow(flashSaleState.data?.items ?: emptyList(), onProductClick = onNavigateToProductDetail)
+                    is Resource.Error -> Text("Error", modifier = Modifier.padding(Dimens.ScreenPadding))
+                }
             }
 
             // Mega Sale Section
@@ -87,7 +110,11 @@ fun HomeScreen(
                     onSeeAllClick = { /* Navigate to mega sale */ }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                ProductsRow(onProductClick = onNavigateToProductDetail)
+                when (megaSaleState) {
+                    is Resource.Loading -> CircularProgressIndicator(modifier = Modifier.padding(Dimens.ScreenPadding))
+                    is Resource.Success -> ProductsRow(megaSaleState.data?.items ?: emptyList(), onProductClick = onNavigateToProductDetail)
+                    is Resource.Error -> Text("Error", modifier = Modifier.padding(Dimens.ScreenPadding))
+                }
             }
 
             // Recommended Section
@@ -105,7 +132,11 @@ fun HomeScreen(
             // Products Grid
             item {
                 Spacer(modifier = Modifier.height(24.dp))
-                ProductsGrid(onProductClick = onNavigateToProductDetail)
+                when (recommendedState) {
+                    is Resource.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                    is Resource.Success -> ProductsGrid(recommendedState.data?.items ?: emptyList(), onProductClick = onNavigateToProductDetail)
+                    is Resource.Error -> Text("Error loading products", modifier = Modifier.padding(Dimens.ScreenPadding))
+                }
             }
         }
     }
@@ -136,24 +167,15 @@ private fun SectionHeader(
 }
 
 @Composable
-private fun CategoriesRow() {
-    val categories = listOf(
-        "Man Shirt" to Icons.Default.Person,
-        "Dress" to Icons.Default.Checkroom,
-        "Man Work" to Icons.Default.Work,
-        "Woman Bag" to Icons.Default.ShoppingBag,
-        "Man Shoes" to Icons.Default.IceSkating,
-        "High Heels" to Icons.Default.Woman
-    )
-
+private fun CategoriesRow(categories: List<CategoryDto>) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(categories) { (name, icon) ->
+        items(categories) { category ->
             CategoryCard(
-                name = name,
-                icon = icon,
+                name = category.name,
+                icon = Icons.Default.Category, // Fallback icon since we use image_url normally
                 onClick = { /* Navigate to category */ }
             )
         }
@@ -161,15 +183,7 @@ private fun CategoriesRow() {
 }
 
 @Composable
-private fun ProductsRow(onProductClick: (String) -> Unit) {
-    // Sample products
-    val products = listOf(
-        SampleProduct("1", "Nike Air Max 270 React ENG", 299.43, 534.33, 24, 4.5f),
-        SampleProduct("2", "Nike Air Max 270 React", 299.43, null, null, 4.0f),
-        SampleProduct("3", "Nike Air Max 90", 199.99, 299.99, 33, 4.8f),
-        SampleProduct("4", "Adidas Ultraboost 21", 249.99, null, null, 4.2f)
-    )
-
+private fun ProductsRow(products: List<ProductDto>, onProductClick: (String) -> Unit) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -177,29 +191,19 @@ private fun ProductsRow(onProductClick: (String) -> Unit) {
         items(products) { product ->
             ProductCard(
                 productName = product.name,
-                productImage = "",
+                productImage = product.primaryImage ?: "",
                 price = product.price,
-                originalPrice = product.originalPrice,
-                discount = product.discount,
-                rating = product.rating,
-                onClick = { onProductClick(product.id) }
+                originalPrice = product.salePrice, // using sale_price as original for demo if needed, usually it's inverse
+                discount = null, // calculate discount if needed
+                rating = product.avgRating ?: 0f,
+                onClick = { onProductClick(product.id.toString()) }
             )
         }
     }
 }
 
 @Composable
-private fun ProductsGrid(onProductClick: (String) -> Unit) {
-    // Sample products for grid
-    val products = listOf(
-        SampleProduct("5", "Nike Air Max 270 React ENG", 299.43, 534.33, 24, 4.5f),
-        SampleProduct("6", "Nike Air Max 270 React", 299.43, null, null, 4.0f),
-        SampleProduct("7", "Nike Air Max 90", 199.99, 299.99, 33, 4.8f),
-        SampleProduct("8", "Adidas Ultraboost 21", 249.99, null, null, 4.2f),
-        SampleProduct("9", "Puma RS-X", 159.99, 199.99, 20, 4.1f),
-        SampleProduct("10", "New Balance 574", 89.99, null, null, 4.6f)
-    )
-
+private fun ProductsGrid(products: List<ProductDto>, onProductClick: (String) -> Unit) {
     Column(
         modifier = Modifier.padding(horizontal = Dimens.ScreenPadding)
     ) {
@@ -211,12 +215,12 @@ private fun ProductsGrid(onProductClick: (String) -> Unit) {
                 rowProducts.forEach { product ->
                     ProductCard(
                         productName = product.name,
-                        productImage = "",
+                        productImage = product.primaryImage ?: "",
                         price = product.price,
-                        originalPrice = product.originalPrice,
-                        discount = product.discount,
-                        rating = product.rating,
-                        onClick = { onProductClick(product.id) },
+                        originalPrice = product.salePrice,
+                        discount = null,
+                        rating = product.avgRating ?: 0f,
+                        onClick = { onProductClick(product.id.toString()) },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -230,15 +234,7 @@ private fun ProductsGrid(onProductClick: (String) -> Unit) {
     }
 }
 
-// Sample data class for preview
-private data class SampleProduct(
-    val id: String,
-    val name: String,
-    val price: Double,
-    val originalPrice: Double?,
-    val discount: Int?,
-    val rating: Float
-)
+
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
