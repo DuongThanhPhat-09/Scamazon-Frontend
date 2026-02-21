@@ -15,9 +15,14 @@ import androidx.navigation.navArgument
 import com.example.scamazon_frontend.ui.screens.auth.LoginScreen
 import com.example.scamazon_frontend.ui.screens.auth.RegisterScreen
 import com.example.scamazon_frontend.ui.screens.cart.CartScreen
+import com.example.scamazon_frontend.ui.screens.checkout.CheckoutScreen
 import com.example.scamazon_frontend.ui.screens.home.HomeScreen
+import com.example.scamazon_frontend.ui.screens.order.OrderHistoryScreen
 import com.example.scamazon_frontend.ui.screens.product.ProductDetailScreen
+import com.example.scamazon_frontend.ui.screens.product.ProductListScreen
 import com.example.scamazon_frontend.ui.screens.profile.AccountScreen
+import com.example.scamazon_frontend.ui.screens.profile.EditProfileScreen
+import com.example.scamazon_frontend.ui.screens.search.SearchScreen
 import com.example.scamazon_frontend.ui.theme.TextSecondary
 import com.example.scamazon_frontend.ui.theme.Typography
 
@@ -105,7 +110,7 @@ fun NavGraph(
         composable(route = Screen.Account.route) {
             AccountScreen(
                 onNavigateToProfile = {
-                    navController.navigate(Screen.Profile.route)
+                    navController.navigate(Screen.EditProfile.route)
                 },
                 onNavigateToOrders = {
                     navController.navigate(Screen.OrderHistory.route)
@@ -148,11 +153,39 @@ fun NavGraph(
             )
         }
 
+        composable(
+            route = Screen.ProductList.route,
+            arguments = listOf(
+                navArgument(NavArgs.CATEGORY_ID) { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val catId = backStackEntry.arguments?.getString(NavArgs.CATEGORY_ID) ?: ""
+            ProductListScreen(
+                categoryId = catId,
+                categoryName = null,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToProductDetail = { productId ->
+                    navController.navigate(Screen.ProductDetail.createRoute(productId))
+                }
+            )
+        }
+
         // ==========================================
         // PLACEHOLDER SCREENS (To be implemented)
         // ==========================================
         composable(route = Screen.Explore.route) {
-            PlaceholderScreen(screenName = "Explore")
+            ProductListScreen(
+                categoryId = null,
+                categoryName = "Explore",
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToProductDetail = { productId ->
+                    navController.navigate(Screen.ProductDetail.createRoute(productId))
+                }
+            )
         }
 
         composable(route = Screen.Offer.route) {
@@ -160,19 +193,89 @@ fun NavGraph(
         }
 
         composable(route = Screen.Search.route) {
-            PlaceholderScreen(screenName = "Search")
+            SearchScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToSearchResult = { query ->
+                    navController.navigate(Screen.SearchResult.createRoute(query))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.SearchResult.route,
+            arguments = listOf(
+                navArgument(NavArgs.QUERY) { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val query = backStackEntry.arguments?.getString(NavArgs.QUERY) ?: ""
+            PlaceholderScreen(screenName = "Results: \"$query\"")
         }
 
         composable(route = Screen.Checkout.route) {
-            PlaceholderScreen(screenName = "Checkout")
+            CheckoutScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onOrderSuccess = {
+                    navController.navigate(Screen.OrderSuccess.createRoute("NEW")) {
+                        popUpTo(Screen.Cart.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = Screen.OrderSuccess.route,
+            arguments = listOf(
+                navArgument(NavArgs.ORDER_ID) { type = NavType.StringType }
+            )
+        ) {
+            PlaceholderScreen(screenName = "Order Placed!")
         }
 
         composable(route = Screen.Profile.route) {
-            PlaceholderScreen(screenName = "Profile")
+            EditProfileScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onSaveSuccess = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(route = Screen.EditProfile.route) {
+            EditProfileScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onSaveSuccess = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         composable(route = Screen.OrderHistory.route) {
-            PlaceholderScreen(screenName = "Order History")
+            OrderHistoryScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToOrderDetail = { orderId ->
+                    navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.OrderDetail.route,
+            arguments = listOf(
+                navArgument(NavArgs.ORDER_ID) { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getString(NavArgs.ORDER_ID) ?: ""
+            PlaceholderScreen(screenName = "Order $orderId")
         }
 
         composable(route = Screen.Wishlist.route) {
