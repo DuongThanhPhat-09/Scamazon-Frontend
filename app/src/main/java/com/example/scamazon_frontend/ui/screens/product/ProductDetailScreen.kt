@@ -17,298 +17,334 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
 
 @Composable
 fun ProductDetailScreen(
     productId: String,
+    viewModel: ProductDetailViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {},
     onNavigateToCart: () -> Unit = {},
     onNavigateToReview: () -> Unit = {}
 ) {
-    var selectedSize by remember { mutableStateOf("42") }
-    var selectedColor by remember { mutableStateOf(PrimaryBlue) }
     var quantity by remember { mutableStateOf(1) }
     var isFavorite by remember { mutableStateOf(false) }
 
-    // Sample product data
-    val product = SampleProductDetail(
-        id = productId,
-        name = "Nike Air Zoom Pegasus 36 Miami",
-        description = "The Nike Air Zoom Pegasus 36 Miami is a comfortable and stylish running shoe designed for everyday use. Features responsive cushioning and breathable mesh upper.",
-        price = 299.43,
-        originalPrice = 534.33,
-        discount = 24,
-        rating = 4.5f,
-        reviewCount = 5,
-        sizes = listOf("39", "40", "41", "42", "43", "44"),
-        colors = listOf(PrimaryBlue, AccentGold, StatusSuccess, StatusError)
-    )
+    val productState by viewModel.productState.collectAsStateWithLifecycle()
+    val addToCartState by viewModel.addToCartState.collectAsStateWithLifecycle()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundWhite)
-    ) {
-        // Top App Bar
-        LafyuuCartAppBar(
-            title = product.name,
-            onBackClick = onNavigateBack,
-            cartItemCount = 2,
-            onCartClick = onNavigateToCart
-        )
+    // Load product on first composition
+    LaunchedEffect(productId) {
+        viewModel.loadProduct(productId)
+    }
 
-        // Content
+    // Handle add to cart result
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(addToCartState) {
+        when (addToCartState) {
+            is Resource.Success -> {
+                snackbarHostState.showSnackbar("Đã thêm vào giỏ hàng!")
+                viewModel.resetAddToCartState()
+            }
+            is Resource.Error -> {
+                snackbarHostState.showSnackbar(addToCartState?.message ?: "Lỗi thêm giỏ hàng")
+                viewModel.resetAddToCartState()
+            }
+            else -> {}
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
         Column(
             modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(BackgroundWhite)
         ) {
-            // Product Images
-            ProductImageSection(
-                isFavorite = isFavorite,
-                onFavoriteClick = { isFavorite = !isFavorite }
-            )
-
-            // Product Info
-            Column(
-                modifier = Modifier.padding(Dimens.ScreenPadding)
-            ) {
-                // Name & Favorite
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Text(
-                        text = product.name,
-                        style = Typography.headlineMedium,
-                        color = TextPrimary,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Rating
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    RatingBar(rating = product.rating)
-                    Text(
-                        text = "(${product.reviewCount} Reviews)",
-                        style = Typography.bodySmall,
-                        color = TextSecondary,
-                        modifier = Modifier.clickable { onNavigateToReview() }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Price
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "$${String.format("%.2f", product.price)}",
-                        fontFamily = Poppins,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = PrimaryBlue
-                    )
-
-                    product.originalPrice?.let {
-                        Text(
-                            text = "$${String.format("%.2f", it)}",
-                            fontFamily = Poppins,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 14.sp,
-                            color = TextHint,
-                            textDecoration = TextDecoration.LineThrough
-                        )
-                    }
-
-                    product.discount?.let {
-                        Text(
-                            text = "$it% Off",
-                            fontFamily = Poppins,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = SecondaryRed
-                        )
+            when (productState) {
+                is Resource.Loading -> {
+                    LafyuuTopAppBar(title = "Product Detail", onBackClick = onNavigateBack)
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = PrimaryBlue)
                     }
                 }
+                is Resource.Error -> {
+                    LafyuuTopAppBar(title = "Product Detail", onBackClick = onNavigateBack)
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = productState.message ?: "Error loading product",
+                                style = Typography.bodyLarge,
+                                color = StatusError
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            LafyuuPrimaryButton(
+                                text = "Retry",
+                                onClick = { viewModel.loadProduct(productId) },
+                                modifier = Modifier.width(200.dp)
+                            )
+                        }
+                    }
+                }
+                is Resource.Success -> {
+                    val product = productState.data!!
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    // Top App Bar
+                    LafyuuCartAppBar(
+                        title = product.name,
+                        onBackClick = onNavigateBack,
+                        cartItemCount = 0,
+                        onCartClick = onNavigateToCart
+                    )
 
-                // Select Size
-                Text(
-                    text = "Select Size",
-                    style = Typography.titleMedium,
-                    color = TextPrimary
-                )
+                    // Content
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        // Product Images
+                        ProductImageSection(
+                            images = product.images,
+                            isFavorite = isFavorite,
+                            onFavoriteClick = { isFavorite = !isFavorite }
+                        )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                        // Product Info
+                        Column(
+                            modifier = Modifier.padding(Dimens.ScreenPadding)
+                        ) {
+                            // Name
+                            Text(
+                                text = product.name,
+                                style = Typography.headlineMedium,
+                                color = TextPrimary
+                            )
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    product.sizes.forEach { size ->
-                        SizeChip(
-                            size = size,
-                            isSelected = selectedSize == size,
-                            onClick = { selectedSize = size }
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Rating
+                            val rating = product.ratingSummary?.avgRating ?: 0f
+                            val reviewCount = product.ratingSummary?.totalReviews ?: 0
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                RatingBar(rating = rating)
+                                Text(
+                                    text = "($reviewCount Reviews)",
+                                    style = Typography.bodySmall,
+                                    color = TextSecondary,
+                                    modifier = Modifier.clickable { onNavigateToReview() }
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Price
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                val displayPrice = product.salePrice ?: product.price
+                                Text(
+                                    text = "$${String.format("%.2f", displayPrice)}",
+                                    fontFamily = Poppins,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp,
+                                    color = PrimaryBlue
+                                )
+
+                                if (product.salePrice != null) {
+                                    Text(
+                                        text = "$${String.format("%.2f", product.price)}",
+                                        fontFamily = Poppins,
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 14.sp,
+                                        color = TextHint,
+                                        textDecoration = TextDecoration.LineThrough
+                                    )
+                                }
+
+                                product.discountPercent?.let {
+                                    if (it > 0) {
+                                        Text(
+                                            text = "$it% Off",
+                                            fontFamily = Poppins,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp,
+                                            color = SecondaryRed
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Stock Status
+                            product.stockStatus?.let { status ->
+                                Text(
+                                    text = "Stock: $status",
+                                    style = Typography.bodyMedium,
+                                    color = if (status == "in_stock") StatusSuccess else StatusError
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+
+                            // Quantity
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Quantity",
+                                    style = Typography.titleMedium,
+                                    color = TextPrimary
+                                )
+
+                                QuantitySelector(
+                                    quantity = quantity,
+                                    onIncrease = {
+                                        val maxQty = product.stockQuantity ?: 99
+                                        if (quantity < maxQty) quantity++
+                                    },
+                                    onDecrease = { if (quantity > 1) quantity-- }
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            // Specifications
+                            product.specifications?.let { specs ->
+                                if (specs.isNotEmpty()) {
+                                    Text(
+                                        text = "Specification",
+                                        style = Typography.titleMedium,
+                                        color = TextPrimary
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    specs.forEach { (key, value) ->
+                                        SpecificationRow(key, value)
+                                    }
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                }
+                            }
+
+                            // Description
+                            product.description?.let { desc ->
+                                Text(
+                                    text = "Description",
+                                    style = Typography.titleMedium,
+                                    color = TextPrimary
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = desc,
+                                    style = Typography.bodyLarge,
+                                    color = TextSecondary
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
+
+                            // Review Section Header
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Review ($reviewCount)",
+                                    style = Typography.titleMedium,
+                                    color = TextPrimary
+                                )
+                                LafyuuTextButton(
+                                    text = "See All",
+                                    onClick = onNavigateToReview
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
+
+                    // Bottom Add to Cart Button
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shadowElevation = 8.dp,
+                        color = White
+                    ) {
+                        val isAddingToCart = addToCartState is Resource.Loading
+                        LafyuuPrimaryButton(
+                            text = if (isAddingToCart) "Adding..." else "Add To Cart",
+                            onClick = {
+                                viewModel.addToCart(product.id, quantity)
+                            },
+                            enabled = !isAddingToCart,
+                            modifier = Modifier.padding(Dimens.ScreenPadding)
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Select Color
-                Text(
-                    text = "Select Color",
-                    style = Typography.titleMedium,
-                    color = TextPrimary
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    product.colors.forEach { color ->
-                        ColorChip(
-                            color = color,
-                            isSelected = selectedColor == color,
-                            onClick = { selectedColor = color }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Quantity
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Quantity",
-                        style = Typography.titleMedium,
-                        color = TextPrimary
-                    )
-
-                    QuantitySelector(
-                        quantity = quantity,
-                        onIncrease = { quantity++ },
-                        onDecrease = { if (quantity > 1) quantity-- }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Specification
-                Text(
-                    text = "Specification",
-                    style = Typography.titleMedium,
-                    color = TextPrimary
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                SpecificationRow("Shown", "Laser Blue/Watermelon/White")
-                SpecificationRow("Style", "CD0113-400")
-                SpecificationRow("Material", "Mesh, Rubber")
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Description
-                Text(
-                    text = "Description",
-                    style = Typography.titleMedium,
-                    color = TextPrimary
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = product.description,
-                    style = Typography.bodyLarge,
-                    color = TextSecondary
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Review Section
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Review (${product.reviewCount})",
-                        style = Typography.titleMedium,
-                        color = TextPrimary
-                    )
-
-                    LafyuuTextButton(
-                        text = "See All",
-                        onClick = onNavigateToReview
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
             }
-        }
-
-        // Bottom Add to Cart Button
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shadowElevation = 8.dp,
-            color = White
-        ) {
-            LafyuuPrimaryButton(
-                text = "Add To Cart",
-                onClick = {
-                    // TODO: Add to cart logic
-                    onNavigateToCart()
-                },
-                modifier = Modifier.padding(Dimens.ScreenPadding)
-            )
         }
     }
 }
 
 @Composable
 private fun ProductImageSection(
+    images: List<com.example.scamazon_frontend.data.models.product.ProductImageDto>,
     isFavorite: Boolean,
     onFavoriteClick: () -> Unit
 ) {
+    val primaryImage = images.firstOrNull { it.isPrimary } ?: images.firstOrNull()
+    var selectedIndex by remember { mutableStateOf(0) }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(238.dp)
             .background(BackgroundLight)
     ) {
-        // Main Image Placeholder
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Product Image",
-                style = Typography.bodyLarge,
-                color = TextHint
+        // Main Image
+        if (images.isNotEmpty()) {
+            val currentImage = images.getOrNull(selectedIndex) ?: images.first()
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(currentImage.imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Product Image",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit
             )
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "No Image", style = Typography.bodyLarge, color = TextHint)
+            }
         }
 
         // Favorite Button
@@ -326,93 +362,44 @@ private fun ProductImageSection(
         }
 
         // Thumbnail Row
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            repeat(4) { index ->
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(
-                            if (index == 0) PrimaryBlueSoft else White,
-                            LafyuuShapes.ImageShape
+        if (images.size > 1) {
+            LazyRow(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(images) { image ->
+                    val index = images.indexOf(image)
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(
+                                if (index == selectedIndex) PrimaryBlueSoft else White,
+                                LafyuuShapes.ImageShape
+                            )
+                            .border(
+                                width = if (index == selectedIndex) 2.dp else 1.dp,
+                                color = if (index == selectedIndex) PrimaryBlue else BorderLight,
+                                shape = LafyuuShapes.ImageShape
+                            )
+                            .clickable { selectedIndex = index },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(image.imageUrl)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = "Thumbnail ${index + 1}",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(LafyuuShapes.ImageShape),
+                            contentScale = ContentScale.Crop
                         )
-                        .border(
-                            width = if (index == 0) 2.dp else 1.dp,
-                            color = if (index == 0) PrimaryBlue else BorderLight,
-                            shape = LafyuuShapes.ImageShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "${index + 1}",
-                        style = Typography.bodySmall,
-                        color = TextHint
-                    )
+                    }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun SizeChip(
-    size: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .background(if (isSelected) PrimaryBlue else White)
-            .border(
-                width = 1.dp,
-                color = if (isSelected) PrimaryBlue else BorderLight,
-                shape = CircleShape
-            )
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = size,
-            fontFamily = Poppins,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            fontSize = 14.sp,
-            color = if (isSelected) White else TextPrimary
-        )
-    }
-}
-
-@Composable
-private fun ColorChip(
-    color: Color,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .background(color)
-            .border(
-                width = if (isSelected) 3.dp else 1.dp,
-                color = if (isSelected) TextPrimary else BorderLight,
-                shape = CircleShape
-            )
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        if (isSelected) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = "Selected",
-                tint = White,
-                modifier = Modifier.size(20.dp)
-            )
         }
     }
 }
@@ -440,27 +427,5 @@ private fun SpecificationRow(
             color = TextPrimary,
             modifier = Modifier.weight(2f)
         )
-    }
-}
-
-// Sample data class
-private data class SampleProductDetail(
-    val id: String,
-    val name: String,
-    val description: String,
-    val price: Double,
-    val originalPrice: Double?,
-    val discount: Int?,
-    val rating: Float,
-    val reviewCount: Int,
-    val sizes: List<String>,
-    val colors: List<Color>
-)
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun ProductDetailScreenPreview() {
-    ScamazonFrontendTheme {
-        ProductDetailScreen(productId = "1")
     }
 }

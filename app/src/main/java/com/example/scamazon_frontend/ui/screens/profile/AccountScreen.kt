@@ -10,26 +10,38 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.core.utils.TokenManager
+import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
 
 @Composable
 fun AccountScreen(
+    viewModel: ProfileViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateToProfile: () -> Unit = {},
     onNavigateToOrders: () -> Unit = {},
     onNavigateToWishlist: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onNavigateToLogin: () -> Unit = {}
 ) {
+    val profileState by viewModel.profileState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -46,11 +58,35 @@ fun AccountScreen(
                 .padding(Dimens.ScreenPadding)
         ) {
             // Profile Header
-            ProfileHeader(
-                name = "John Doe",
-                email = "johndoe@email.com",
-                onEditClick = onNavigateToProfile
-            )
+            when (profileState) {
+                is Resource.Loading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(80.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = PrimaryBlue)
+                    }
+                }
+                is Resource.Error -> {
+                    ProfileHeader(
+                        name = "Guest",
+                        email = profileState.message ?: "Error loading profile",
+                        avatarUrl = null,
+                        onEditClick = onNavigateToProfile
+                    )
+                }
+                is Resource.Success -> {
+                    val profile = profileState.data!!
+                    ProfileHeader(
+                        name = profile.fullName ?: profile.username,
+                        email = profile.email ?: "",
+                        avatarUrl = profile.avatarUrl,
+                        onEditClick = onNavigateToProfile
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -128,7 +164,10 @@ fun AccountScreen(
             // Logout Button
             LafyuuOutlinedButton(
                 text = "Sign Out",
-                onClick = onNavigateToLogin
+                onClick = {
+                    TokenManager(context).clearAll()
+                    onNavigateToLogin()
+                }
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -140,6 +179,7 @@ fun AccountScreen(
 private fun ProfileHeader(
     name: String,
     email: String,
+    avatarUrl: String?,
     onEditClick: () -> Unit
 ) {
     Row(
@@ -147,20 +187,34 @@ private fun ProfileHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Avatar
-        Box(
-            modifier = Modifier
-                .size(Dimens.AvatarSizeLarge)
-                .clip(CircleShape)
-                .background(PrimaryBlueSoft),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = name.take(1).uppercase(),
-                fontFamily = Poppins,
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
-                color = PrimaryBlue
+        if (!avatarUrl.isNullOrEmpty()) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(avatarUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Avatar",
+                modifier = Modifier
+                    .size(Dimens.AvatarSizeLarge)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
             )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(Dimens.AvatarSizeLarge)
+                    .clip(CircleShape)
+                    .background(PrimaryBlueSoft),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = name.take(1).uppercase(),
+                    fontFamily = Poppins,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                    color = PrimaryBlue
+                )
+            }
         }
 
         Spacer(modifier = Modifier.width(16.dp))
@@ -244,13 +298,5 @@ private fun AccountMenuItem(
             contentDescription = null,
             tint = TextHint
         )
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun AccountScreenPreview() {
-    ScamazonFrontendTheme {
-        AccountScreen()
     }
 }

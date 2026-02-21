@@ -10,113 +10,154 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.data.models.cart.CartItemDto
+import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
 
 @Composable
 fun CartScreen(
+    viewModel: CartViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateToCheckout: () -> Unit = {},
     onNavigateToProductDetail: (String) -> Unit = {},
     onNavigateBack: () -> Unit = {}
 ) {
-    // Sample cart items
-    var cartItems by remember {
-        mutableStateOf(
-            listOf(
-                CartItem("1", "Nike Air Zoom Pegasus 36 Miami", "", 299.43, 2),
-                CartItem("2", "Nike Air Max 270 React ENG", "", 199.99, 1),
-                CartItem("3", "Adidas Ultraboost 21", "", 249.99, 1)
-            )
-        )
+    val cartState by viewModel.cartState.collectAsStateWithLifecycle()
+    val operationMessage by viewModel.operationMessage.collectAsStateWithLifecycle()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show operation messages
+    LaunchedEffect(operationMessage) {
+        operationMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearMessage()
+        }
     }
 
-    val totalPrice = cartItems.sumOf { it.price * it.quantity }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundWhite)
-    ) {
-        // Top App Bar
-        LafyuuTopAppBar(
-            title = "Your Cart",
-            onBackClick = onNavigateBack
-        )
-
-        if (cartItems.isEmpty()) {
-            // Empty Cart State
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                EmptyState(
-                    title = "Your Cart is Empty",
-                    message = "Looks like you haven't added anything to your cart yet"
-                ) {
-                    LafyuuPrimaryButton(
-                        text = "Start Shopping",
-                        onClick = onNavigateBack,
-                        modifier = Modifier.width(200.dp)
-                    )
-                }
-            }
-        } else {
-            // Cart Items List
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(Dimens.ScreenPadding),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(cartItems, key = { it.id }) { item ->
-                    CartItemCard(
-                        item = item,
-                        onQuantityIncrease = {
-                            cartItems = cartItems.map {
-                                if (it.id == item.id) it.copy(quantity = it.quantity + 1)
-                                else it
-                            }
-                        },
-                        onQuantityDecrease = {
-                            if (item.quantity > 1) {
-                                cartItems = cartItems.map {
-                                    if (it.id == item.id) it.copy(quantity = it.quantity - 1)
-                                    else it
-                                }
-                            }
-                        },
-                        onRemove = {
-                            cartItems = cartItems.filter { it.id != item.id }
-                        },
-                        onClick = { onNavigateToProductDetail(item.id) }
-                    )
-                }
-
-                // Coupon Section
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    CouponSection()
-                }
-            }
-
-            // Bottom Section - Total & Checkout
-            CartBottomSection(
-                totalPrice = totalPrice,
-                itemCount = cartItems.size,
-                onCheckout = onNavigateToCheckout
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(BackgroundWhite)
+        ) {
+            // Top App Bar
+            LafyuuTopAppBar(
+                title = "Your Cart",
+                onBackClick = onNavigateBack
             )
+
+            when (cartState) {
+                is Resource.Loading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = PrimaryBlue)
+                    }
+                }
+                is Resource.Error -> {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = cartState.message ?: "Error loading cart",
+                                style = Typography.bodyLarge,
+                                color = StatusError
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            LafyuuPrimaryButton(
+                                text = "Retry",
+                                onClick = { viewModel.fetchCart() },
+                                modifier = Modifier.width(200.dp)
+                            )
+                        }
+                    }
+                }
+                is Resource.Success -> {
+                    val cart = cartState.data!!
+                    if (cart.items.isEmpty()) {
+                        // Empty Cart State
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            EmptyState(
+                                title = "Your Cart is Empty",
+                                message = "Looks like you haven't added anything to your cart yet"
+                            ) {
+                                LafyuuPrimaryButton(
+                                    text = "Start Shopping",
+                                    onClick = onNavigateBack,
+                                    modifier = Modifier.width(200.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        // Cart Items List
+                        LazyColumn(
+                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(Dimens.ScreenPadding),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(cart.items, key = { it.id }) { item ->
+                                CartItemCard(
+                                    item = item,
+                                    onQuantityIncrease = {
+                                        if (item.quantity < item.stockQuantity) {
+                                            viewModel.updateQuantity(item.id, item.quantity + 1)
+                                        }
+                                    },
+                                    onQuantityDecrease = {
+                                        if (item.quantity > 1) {
+                                            viewModel.updateQuantity(item.id, item.quantity - 1)
+                                        }
+                                    },
+                                    onRemove = {
+                                        viewModel.removeItem(item.id)
+                                    },
+                                    onClick = { onNavigateToProductDetail(item.productId.toString()) }
+                                )
+                            }
+                        }
+
+                        // Bottom Section - Total & Checkout
+                        CartBottomSection(
+                            subtotal = cart.subtotal,
+                            itemCount = cart.totalItems,
+                            onCheckout = onNavigateToCheckout
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
 private fun CartItemCard(
-    item: CartItem,
+    item: CartItemDto,
     onQuantityIncrease: () -> Unit,
     onQuantityDecrease: () -> Unit,
     onRemove: () -> Unit,
@@ -135,17 +176,27 @@ private fun CartItemCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Product Image
-            Box(
-                modifier = Modifier
-                    .size(Dimens.ProductImageSize)
-                    .background(BackgroundLight, LafyuuShapes.ImageShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Img",
-                    style = Typography.bodySmall,
-                    color = TextHint
+            if (!item.productImage.isNullOrEmpty()) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(item.productImage)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = item.productName,
+                    modifier = Modifier
+                        .size(Dimens.ProductImageSize)
+                        .background(BackgroundLight, LafyuuShapes.ImageShape),
+                    contentScale = ContentScale.Crop
                 )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(Dimens.ProductImageSize)
+                        .background(BackgroundLight, LafyuuShapes.ImageShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "Img", style = Typography.bodySmall, color = TextHint)
+                }
             }
 
             // Product Info
@@ -157,7 +208,7 @@ private fun CartItemCard(
                     verticalAlignment = Alignment.Top
                 ) {
                     Text(
-                        text = item.name,
+                        text = item.productName,
                         style = Typography.titleMedium,
                         color = TextPrimary,
                         maxLines = 2,
@@ -185,8 +236,9 @@ private fun CartItemCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val displayPrice = item.salePrice ?: item.price
                     Text(
-                        text = "$${String.format("%.2f", item.price)}",
+                        text = "$${String.format("%.2f", displayPrice)}",
                         fontFamily = Poppins,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
@@ -205,46 +257,8 @@ private fun CartItemCard(
 }
 
 @Composable
-private fun CouponSection() {
-    var couponCode by remember { mutableStateOf("") }
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        OutlinedTextField(
-            value = couponCode,
-            onValueChange = { couponCode = it },
-            modifier = Modifier
-                .weight(1f)
-                .height(48.dp),
-            placeholder = {
-                Text(
-                    text = "Enter Coupon Code",
-                    style = Typography.bodyMedium,
-                    color = TextHint
-                )
-            },
-            shape = LafyuuShapes.InputFieldShape,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = PrimaryBlue,
-                unfocusedBorderColor = BorderLight
-            ),
-            singleLine = true,
-            textStyle = Typography.bodyMedium.copy(color = TextPrimary)
-        )
-
-        LafyuuSmallButton(
-            text = "Apply",
-            onClick = { /* Apply coupon */ }
-        )
-    }
-}
-
-@Composable
 private fun CartBottomSection(
-    totalPrice: Double,
+    subtotal: Double,
     itemCount: Int,
     onCheckout: () -> Unit
 ) {
@@ -269,7 +283,7 @@ private fun CartBottomSection(
                     color = TextSecondary
                 )
                 Text(
-                    text = "$${String.format("%.2f", totalPrice)}",
+                    text = "$${String.format("%.2f", subtotal)}",
                     style = Typography.bodyLarge,
                     color = TextPrimary
                 )
@@ -309,7 +323,7 @@ private fun CartBottomSection(
                     color = TextPrimary
                 )
                 Text(
-                    text = "$${String.format("%.2f", totalPrice + 40.0)}",
+                    text = "$${String.format("%.2f", subtotal + 40.0)}",
                     style = Typography.titleLarge,
                     color = PrimaryBlue
                 )
@@ -322,22 +336,5 @@ private fun CartBottomSection(
                 onClick = onCheckout
             )
         }
-    }
-}
-
-// Data class for cart item
-private data class CartItem(
-    val id: String,
-    val name: String,
-    val image: String,
-    val price: Double,
-    val quantity: Int
-)
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun CartScreenPreview() {
-    ScamazonFrontendTheme {
-        CartScreen()
     }
 }
