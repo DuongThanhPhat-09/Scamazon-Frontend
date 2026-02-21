@@ -196,7 +196,7 @@ private fun ProductsRow(products: List<ProductDto>, onProductClick: (String) -> 
                 originalPrice = product.salePrice, // using sale_price as original for demo if needed, usually it's inverse
                 discount = null, // calculate discount if needed
                 rating = product.avgRating ?: 0f,
-                onClick = { onProductClick(product.id.toString()) }
+                onClick = { onProductClick(product.slug) }
             )
         }
     }
@@ -220,7 +220,7 @@ private fun ProductsGrid(products: List<ProductDto>, onProductClick: (String) ->
                         originalPrice = product.salePrice,
                         discount = null,
                         rating = product.avgRating ?: 0f,
-                        onClick = { onProductClick(product.id.toString()) },
+                        onClick = { onProductClick(product.slug) },
                         modifier = Modifier.weight(1f)
                     )
                 }
