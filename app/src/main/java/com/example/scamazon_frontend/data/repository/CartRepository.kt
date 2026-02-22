@@ -26,7 +26,23 @@ class CartRepository(private val cartService: CartService) {
     }
 
     suspend fun removeCartItem(id: Int): Resource<Any> {
-        return safeApiCall { cartService.removeCartItem(id) }
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = cartService.removeCartItem(id)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body != null && body.success) {
+                        Resource.Success(body.data ?: Unit)
+                    } else {
+                        Resource.Error(body?.message ?: "Unknown error")
+                    }
+                } else {
+                    Resource.Error("API Error: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error occurred")
+            }
+        }
     }
 
     private suspend fun <T> safeApiCall(apiCall: suspend () -> Response<ApiResponse<T>>): Resource<T> {

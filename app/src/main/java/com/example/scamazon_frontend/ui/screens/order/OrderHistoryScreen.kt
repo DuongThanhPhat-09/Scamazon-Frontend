@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.core.utils.formatPrice
 import com.example.scamazon_frontend.data.models.order.OrderSummaryDto
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
@@ -172,7 +173,7 @@ private fun OrderCard(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "$${String.format("%.2f", order.total)}",
+                        text = "${formatPrice(order.total)}đ",
                         fontFamily = Poppins,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,

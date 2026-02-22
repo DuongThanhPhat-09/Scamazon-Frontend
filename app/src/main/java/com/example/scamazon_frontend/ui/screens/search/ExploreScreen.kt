@@ -26,6 +26,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.product.ProductDto
+import com.example.scamazon_frontend.core.utils.formatPrice
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
@@ -75,7 +76,7 @@ fun ExploreScreen(
                         text = when (sortBy) {
                             "price" -> "Price"
                             "name" -> "Name"
-                            "avg_rating" -> "Rating"
+                            "rating" -> "Rating"
                             else -> "Newest"
                         },
                         style = Typography.bodySmall
@@ -122,8 +123,8 @@ fun ExploreScreen(
                 }
             }
             is Resource.Success -> {
-                val data = productsState.data!!
-                if (data.items.isEmpty()) {
+                val products = productsState.data!!
+                if (products.isEmpty()) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -140,7 +141,7 @@ fun ExploreScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(data.items) { product ->
+                        items(products) { product ->
                             SearchProductCard(
                                 product = product,
                                 onClick = { onProductClick(product.slug) }
@@ -162,10 +163,10 @@ fun ExploreScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 val sortOptions = listOf(
-                    "created_at" to "Newest",
+                    "newest" to "Newest",
                     "price" to "Price",
                     "name" to "Name",
-                    "avg_rating" to "Rating"
+                    "rating" to "Rating"
                 )
 
                 sortOptions.forEach { (value, label) ->
@@ -173,7 +174,7 @@ fun ExploreScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                viewModel.onSortChanged(value, if (value == "price") "asc" else "desc")
+                                viewModel.onSortChanged(value)
                                 showSortSheet = false
                             }
                             .padding(vertical = 12.dp),
@@ -182,7 +183,7 @@ fun ExploreScreen(
                         RadioButton(
                             selected = sortBy == value,
                             onClick = {
-                                viewModel.onSortChanged(value, if (value == "price") "asc" else "desc")
+                                viewModel.onSortChanged(value)
                                 showSortSheet = false
                             },
                             colors = RadioButtonDefaults.colors(selectedColor = PrimaryBlue)
@@ -265,7 +266,7 @@ private fun SearchProductCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val displayPrice = product.salePrice ?: product.price
                     Text(
-                        text = "$${String.format("%.2f", displayPrice)}",
+                        text = "${formatPrice(displayPrice)}đ",
                         fontFamily = Poppins,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
@@ -275,7 +276,7 @@ private fun SearchProductCard(
                     if (product.salePrice != null) {
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "$${String.format("%.2f", product.price)}",
+                            text = "${formatPrice(product.price)}đ",
                             fontFamily = Poppins,
                             fontSize = 10.sp,
                             color = TextHint,
