@@ -10,6 +10,6 @@ import retrofit2.http.Part
 
 interface UploadService {
     @Multipart
-    @POST("api/admin/upload")
+    @POST("api/chat/upload")
     suspend fun uploadImage(@Part file: MultipartBody.Part): Response<ApiResponse<UploadDataDto>>
 }
