@@ -8,19 +8,24 @@ import com.example.scamazon_frontend.core.utils.TokenManager
 import com.example.scamazon_frontend.data.remote.AuthService
 import com.example.scamazon_frontend.data.remote.CartService
 import com.example.scamazon_frontend.data.remote.CategoryService
+import com.example.scamazon_frontend.data.remote.OrderService
 import com.example.scamazon_frontend.data.remote.ProductService
 import com.example.scamazon_frontend.data.remote.ProfileService
 import com.example.scamazon_frontend.data.repository.AuthRepository
 import com.example.scamazon_frontend.data.repository.CartRepository
 import com.example.scamazon_frontend.data.repository.HomeRepository
+import com.example.scamazon_frontend.data.repository.OrderRepository
 import com.example.scamazon_frontend.data.repository.ProductRepository
 import com.example.scamazon_frontend.data.repository.ProfileRepository
 import com.example.scamazon_frontend.ui.screens.auth.AuthViewModel
 import com.example.scamazon_frontend.ui.screens.cart.CartViewModel
+import com.example.scamazon_frontend.ui.screens.checkout.CheckoutViewModel
 import com.example.scamazon_frontend.ui.screens.home.HomeViewModel
-import com.example.scamazon_frontend.ui.screens.product.ProductListViewModel
+import com.example.scamazon_frontend.ui.screens.order.OrderHistoryViewModel
 import com.example.scamazon_frontend.ui.screens.product.ProductDetailViewModel
+import com.example.scamazon_frontend.ui.screens.product.ProductListViewModel
 import com.example.scamazon_frontend.ui.screens.profile.ProfileViewModel
+import com.example.scamazon_frontend.ui.screens.search.SearchViewModel
 
 class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -71,6 +76,27 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             val profileRepository = ProfileRepository(profileService)
             @Suppress("UNCHECKED_CAST")
             return ProfileViewModel(profileRepository) as T
+        }
+
+        // Phase 3 ViewModels
+        if (modelClass.isAssignableFrom(SearchViewModel::class.java)) {
+            val productService = retrofit.create(ProductService::class.java)
+            @Suppress("UNCHECKED_CAST")
+            return SearchViewModel(productService) as T
+        }
+
+        if (modelClass.isAssignableFrom(CheckoutViewModel::class.java)) {
+            val orderService = retrofit.create(OrderService::class.java)
+            val orderRepository = OrderRepository(orderService)
+            @Suppress("UNCHECKED_CAST")
+            return CheckoutViewModel(orderRepository) as T
+        }
+
+        if (modelClass.isAssignableFrom(OrderHistoryViewModel::class.java)) {
+            val orderService = retrofit.create(OrderService::class.java)
+            val orderRepository = OrderRepository(orderService)
+            @Suppress("UNCHECKED_CAST")
+            return OrderHistoryViewModel(orderRepository) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class")

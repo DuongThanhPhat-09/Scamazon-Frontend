@@ -202,10 +202,9 @@ private fun SortFilterBar(
 ) {
     val sortLabel = when (currentSort) {
         "newest" -> "Newest"
-        "price_asc" -> "Price: Low to High"
-        "price_desc" -> "Price: High to Low"
-        "popular" -> "Popular"
-        "rating" -> "Top Rated"
+        "price" -> "Price"
+        "name" -> "Name"
+        "rating" -> "Rating"
         else -> "Sort"
     }
 
@@ -263,10 +262,9 @@ private fun SortBottomSheet(
 ) {
     val sortOptions = listOf(
         "newest" to "Newest",
-        "popular" to "Popular",
-        "price_asc" to "Price: Low to High",
-        "price_desc" to "Price: High to Low",
-        "rating" to "Top Rated"
+        "price" to "Price",
+        "name" to "Name",
+        "rating" to "Rating"
     )
 
     ModalBottomSheet(

@@ -24,9 +24,10 @@ class HomeRepository(
         page: Int? = null,
         limit: Int? = null,
         categoryId: Int? = null,
-        sort: String? = null
+        sort: String? = null,
+        sortOrder: String? = null
     ): Resource<ProductPaginationResponse> {
-        return safeApiCall { productService.getProducts(page, limit, categoryId, sort) }
+        return safeApiCall { productService.getProducts(page = page, limit = limit, categoryId = categoryId, sortBy = sort, sortOrder = sortOrder) }
     }
 
     private suspend fun <T> safeApiCall(apiCall: suspend () -> Response<ApiResponse<T>>): Resource<T> {

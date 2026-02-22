@@ -22,7 +22,7 @@ import com.example.scamazon_frontend.ui.screens.product.ProductDetailScreen
 import com.example.scamazon_frontend.ui.screens.product.ProductListScreen
 import com.example.scamazon_frontend.ui.screens.profile.AccountScreen
 import com.example.scamazon_frontend.ui.screens.profile.EditProfileScreen
-import com.example.scamazon_frontend.ui.screens.search.SearchScreen
+import com.example.scamazon_frontend.ui.screens.search.ExploreScreen
 import com.example.scamazon_frontend.ui.theme.TextSecondary
 import com.example.scamazon_frontend.ui.theme.Typography
 
@@ -176,14 +176,12 @@ fun NavGraph(
         // PLACEHOLDER SCREENS (To be implemented)
         // ==========================================
         composable(route = Screen.Explore.route) {
-            ProductListScreen(
-                categoryId = null,
-                categoryName = "Explore",
+            ExploreScreen(
+                onProductClick = { slug ->
+                    navController.navigate(Screen.ProductDetail.createRoute(slug))
+                },
                 onNavigateBack = {
                     navController.popBackStack()
-                },
-                onNavigateToProductDetail = { productId ->
-                    navController.navigate(Screen.ProductDetail.createRoute(productId))
                 }
             )
         }
@@ -193,12 +191,12 @@ fun NavGraph(
         }
 
         composable(route = Screen.Search.route) {
-            SearchScreen(
+            ExploreScreen(
+                onProductClick = { slug ->
+                    navController.navigate(Screen.ProductDetail.createRoute(slug))
+                },
                 onNavigateBack = {
                     navController.popBackStack()
-                },
-                onNavigateToSearchResult = { query ->
-                    navController.navigate(Screen.SearchResult.createRoute(query))
                 }
             )
         }
@@ -218,8 +216,8 @@ fun NavGraph(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onOrderSuccess = {
-                    navController.navigate(Screen.OrderSuccess.createRoute("NEW")) {
+                onOrderSuccess = { orderId ->
+                    navController.navigate(Screen.OrderSuccess.createRoute(orderId)) {
                         popUpTo(Screen.Cart.route) { inclusive = true }
                     }
                 }
@@ -239,9 +237,6 @@ fun NavGraph(
             EditProfileScreen(
                 onNavigateBack = {
                     navController.popBackStack()
-                },
-                onSaveSuccess = {
-                    navController.popBackStack()
                 }
             )
         }
@@ -249,9 +244,6 @@ fun NavGraph(
         composable(route = Screen.EditProfile.route) {
             EditProfileScreen(
                 onNavigateBack = {
-                    navController.popBackStack()
-                },
-                onSaveSuccess = {
                     navController.popBackStack()
                 }
             )
@@ -262,7 +254,7 @@ fun NavGraph(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onNavigateToOrderDetail = { orderId ->
+                onOrderClick = { orderId ->
                     navController.navigate(Screen.OrderDetail.createRoute(orderId))
                 }
             )

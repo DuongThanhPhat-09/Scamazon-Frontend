@@ -1,83 +1,78 @@
 package com.example.scamazon_frontend.ui.screens.profile
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.data.models.profile.UpdateProfileRequest
+import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
 
 @Composable
 fun EditProfileScreen(
-    onNavigateBack: () -> Unit = {},
-    onSaveSuccess: () -> Unit = {}
+    viewModel: ProfileViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
+    onNavigateBack: () -> Unit = {}
 ) {
-    var fullName by remember { mutableStateOf("John Doe") }
-    var email by remember { mutableStateOf("johndoe@email.com") }
-    var phone by remember { mutableStateOf("+1 555 234 5678") }
-    var username by remember { mutableStateOf("johndoe") }
+    val profileState by viewModel.profileState.collectAsStateWithLifecycle()
+    val updateState by viewModel.updateState.collectAsStateWithLifecycle()
 
-    var fullNameError by remember { mutableStateOf<String?>(null) }
-    var emailError by remember { mutableStateOf<String?>(null) }
-    var phoneError by remember { mutableStateOf<String?>(null) }
+    // Form fields
+    var fullName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    var city by remember { mutableStateOf("") }
+    var district by remember { mutableStateOf("") }
+    var ward by remember { mutableStateOf("") }
+    var initialized by remember { mutableStateOf(false) }
 
-    var isLoading by remember { mutableStateOf(false) }
-    var showSuccessSnackbar by remember { mutableStateOf(false) }
-
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(showSuccessSnackbar) {
-        if (showSuccessSnackbar) {
-            snackbarHostState.showSnackbar("Profile updated successfully!")
-            showSuccessSnackbar = false
-            onSaveSuccess()
+    // Populate form when profile loads
+    LaunchedEffect(profileState) {
+        if (profileState is Resource.Success && !initialized) {
+            val profile = profileState.data!!
+            fullName = profile.fullName ?: ""
+            email = profile.email ?: ""
+            phone = profile.phone ?: ""
+            address = profile.address ?: ""
+            city = profile.city ?: ""
+            district = profile.district ?: ""
+            ward = profile.ward ?: ""
+            initialized = true
         }
     }
 
-    fun validate(): Boolean {
-        var valid = true
-        fullNameError = if (fullName.isBlank()) {
-            valid = false
-            "Full name is required"
-        } else null
-
-        emailError = if (email.isBlank()) {
-            valid = false
-            "Email is required"
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            valid = false
-            "Enter a valid email"
-        } else null
-
-        phoneError = if (phone.isNotBlank() && phone.length < 8) {
-            valid = false
-            "Enter a valid phone number"
-        } else null
-
-        return valid
+    // Handle update result
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(updateState) {
+        when (updateState) {
+            is Resource.Success -> {
+                snackbarHostState.showSnackbar("Profile updated successfully!")
+                viewModel.resetUpdateState()
+            }
+            is Resource.Error -> {
+                snackbarHostState.showSnackbar(updateState?.message ?: "Update failed")
+                viewModel.resetUpdateState()
+            }
+            else -> {}
+        }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = BackgroundWhite
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -85,172 +80,132 @@ fun EditProfileScreen(
                 .padding(paddingValues)
                 .background(BackgroundWhite)
         ) {
-            LafyuuTopAppBar(
-                title = "Edit Profile",
-                onBackClick = onNavigateBack
-            )
+            LafyuuTopAppBar(title = "Edit Profile", onBackClick = onNavigateBack)
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(Dimens.ScreenPadding),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Avatar Section
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box {
-                        Box(
-                            modifier = Modifier
-                                .size(96.dp)
-                                .clip(CircleShape)
-                                .background(PrimaryBlueSoft),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = fullName.take(1).uppercase(),
-                                fontFamily = Poppins,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 36.sp,
-                                color = PrimaryBlue
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(PrimaryBlue)
-                                .align(Alignment.BottomEnd)
-                                .clickable { /* Pick image */ },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CameraAlt,
-                                contentDescription = "Change photo",
-                                tint = White,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        }
+            when (profileState) {
+                is Resource.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = PrimaryBlue)
                     }
                 }
-
-                Text(
-                    text = "Tap avatar to change photo",
-                    fontFamily = Poppins,
-                    fontSize = 12.sp,
-                    color = TextSecondary,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Form Fields
-                FormFieldLabel(text = "Full Name")
-                LafyuuTextField(
-                    value = fullName,
-                    onValueChange = {
-                        fullName = it
-                        fullNameError = null
-                    },
-                    placeholder = "Enter your full name",
-                    leadingIcon = Icons.Default.Person,
-                    isError = fullNameError != null,
-                    errorMessage = fullNameError,
-                    imeAction = ImeAction.Next
-                )
-
-                FormFieldLabel(text = "Username")
-                LafyuuTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    placeholder = "Enter username",
-                    leadingIcon = Icons.Default.Person,
-                    imeAction = ImeAction.Next
-                )
-
-                FormFieldLabel(text = "Email Address")
-                LafyuuEmailField(
-                    value = email,
-                    onValueChange = {
-                        email = it
-                        emailError = null
-                    },
-                    placeholder = "Enter your email",
-                    isError = emailError != null,
-                    errorMessage = emailError,
-                    imeAction = ImeAction.Next
-                )
-
-                FormFieldLabel(text = "Phone Number")
-                LafyuuTextField(
-                    value = phone,
-                    onValueChange = {
-                        phone = it
-                        phoneError = null
-                    },
-                    placeholder = "Enter your phone number",
-                    leadingIcon = Icons.Default.Phone,
-                    isError = phoneError != null,
-                    errorMessage = phoneError,
-                    keyboardType = KeyboardType.Phone,
-                    imeAction = ImeAction.Done,
-                    onImeAction = {
-                        if (validate()) {
-                            isLoading = true
-                            showSuccessSnackbar = true
-                            isLoading = false
-                        }
+                is Resource.Error -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = profileState.message ?: "Error",
+                            style = Typography.bodyLarge,
+                            color = StatusError
+                        )
                     }
-                )
+                }
+                is Resource.Success -> {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                            .padding(Dimens.ScreenPadding),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Full Name
+                        Text(text = "Full Name", style = Typography.titleSmall, color = TextPrimary)
+                        LafyuuTextField(
+                            value = fullName,
+                            onValueChange = { fullName = it },
+                            placeholder = "Enter your full name",
+                            leadingIcon = Icons.Default.Person
+                        )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                        // Email
+                        Text(text = "Email", style = Typography.titleSmall, color = TextPrimary)
+                        LafyuuTextField(
+                            value = email,
+                            onValueChange = { email = it },
+                            placeholder = "Enter your email",
+                            leadingIcon = Icons.Default.Email,
+                            keyboardType = KeyboardType.Email
+                        )
 
-                // Save Button
-                LafyuuPrimaryButton(
-                    text = if (isLoading) "Saving..." else "Save Changes",
-                    onClick = {
-                        if (validate()) {
-                            isLoading = true
-                            showSuccessSnackbar = true
-                            isLoading = false
+                        // Phone
+                        Text(text = "Phone", style = Typography.titleSmall, color = TextPrimary)
+                        LafyuuTextField(
+                            value = phone,
+                            onValueChange = { phone = it },
+                            placeholder = "Enter your phone number",
+                            leadingIcon = Icons.Default.Phone,
+                            keyboardType = KeyboardType.Phone
+                        )
+
+                        // Address
+                        Text(text = "Address", style = Typography.titleSmall, color = TextPrimary)
+                        LafyuuTextField(
+                            value = address,
+                            onValueChange = { address = it },
+                            placeholder = "Street address",
+                            leadingIcon = Icons.Default.LocationOn
+                        )
+
+                        // City, District, Ward
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            LafyuuTextField(
+                                value = city,
+                                onValueChange = { city = it },
+                                placeholder = "City",
+                                modifier = Modifier.weight(1f)
+                            )
+                            LafyuuTextField(
+                                value = district,
+                                onValueChange = { district = it },
+                                placeholder = "District",
+                                modifier = Modifier.weight(1f)
+                            )
                         }
-                    },
-                    enabled = !isLoading
-                )
 
-                // Cancel Button
-                LafyuuOutlinedButton(
-                    text = "Cancel",
-                    onClick = onNavigateBack
-                )
+                        LafyuuTextField(
+                            value = ward,
+                            onValueChange = { ward = it },
+                            placeholder = "Ward",
+                            imeAction = ImeAction.Done
+                        )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    // Save Button
+                    val isUpdating = updateState is Resource.Loading
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shadowElevation = 8.dp,
+                        color = White
+                    ) {
+                        LafyuuPrimaryButton(
+                            text = if (isUpdating) "Saving..." else "Save Changes",
+                            onClick = {
+                                viewModel.updateProfile(
+                                    UpdateProfileRequest(
+                                        fullName = fullName.ifBlank { null },
+                                        email = email.ifBlank { null },
+                                        phone = phone.ifBlank { null },
+                                        address = address.ifBlank { null },
+                                        city = city.ifBlank { null },
+                                        district = district.ifBlank { null },
+                                        ward = ward.ifBlank { null }
+                                    )
+                                )
+                            },
+                            enabled = !isUpdating,
+                            modifier = Modifier.padding(Dimens.ScreenPadding)
+                        )
+                    }
+                }
             }
         }
-    }
-}
-
-@Composable
-private fun FormFieldLabel(text: String) {
-    Text(
-        text = text,
-        fontFamily = Poppins,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        color = TextPrimary,
-        modifier = Modifier.padding(bottom = 4.dp)
-    )
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun EditProfileScreenPreview() {
-    ScamazonFrontendTheme {
-        EditProfileScreen()
     }
 }

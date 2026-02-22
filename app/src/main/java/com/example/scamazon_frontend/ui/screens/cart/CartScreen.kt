@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.core.utils.formatPrice
 import com.example.scamazon_frontend.data.models.cart.CartItemDto
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
@@ -238,7 +239,7 @@ private fun CartItemCard(
                 ) {
                     val displayPrice = item.salePrice ?: item.price
                     Text(
-                        text = "$${String.format("%.2f", displayPrice)}",
+                        text = "${formatPrice(displayPrice)}đ",
                         fontFamily = Poppins,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
@@ -283,7 +284,7 @@ private fun CartBottomSection(
                     color = TextSecondary
                 )
                 Text(
-                    text = "$${String.format("%.2f", subtotal)}",
+                    text = "${formatPrice(subtotal)}đ",
                     style = Typography.bodyLarge,
                     color = TextPrimary
                 )
@@ -323,7 +324,7 @@ private fun CartBottomSection(
                     color = TextPrimary
                 )
                 Text(
-                    text = "$${String.format("%.2f", subtotal + 40.0)}",
+                    text = "${formatPrice(subtotal + 40.0)}đ",
                     style = Typography.titleLarge,
                     color = PrimaryBlue
                 )
