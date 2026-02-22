@@ -4,6 +4,8 @@ import com.example.scamazon_frontend.core.network.ApiResponse
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.admin.*
 import com.example.scamazon_frontend.data.models.category.CategoryDto
+import com.example.scamazon_frontend.data.models.order.OrderDetailDataDto
+import com.example.scamazon_frontend.data.models.order.OrderSummaryDto
 import com.example.scamazon_frontend.data.models.product.ProductPaginationResponse
 import com.example.scamazon_frontend.data.remote.AdminService
 import com.example.scamazon_frontend.data.remote.BrandService
@@ -106,6 +108,20 @@ class AdminRepository(
 
     suspend fun deleteBrand(id: Int): Resource<Any> {
         return safeApiCall { adminService.deleteBrand(id) }
+    }
+
+    // ==================== Order Management ====================
+
+    suspend fun getAdminOrders(): Resource<List<OrderSummaryDto>> {
+        return safeApiCall { adminService.getAdminOrders() }
+    }
+
+    suspend fun getAdminOrderDetail(id: Int): Resource<OrderDetailDataDto> {
+        return safeApiCall { adminService.getAdminOrderDetail(id) }
+    }
+
+    suspend fun updateOrderStatus(orderId: Int, status: String): Resource<Any> {
+        return safeApiCall { adminService.updateOrderStatus(orderId, mapOf("status" to status)) }
     }
 
     // ==================== Helper ====================

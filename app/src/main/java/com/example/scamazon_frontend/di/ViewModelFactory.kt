@@ -22,6 +22,7 @@ import com.example.scamazon_frontend.data.repository.ProductRepository
 import com.example.scamazon_frontend.data.repository.ProfileRepository
 import com.example.scamazon_frontend.ui.screens.admin.category.AdminCategoryViewModel
 import com.example.scamazon_frontend.ui.screens.admin.dashboard.AdminDashboardViewModel
+import com.example.scamazon_frontend.ui.screens.admin.order.AdminOrderViewModel
 import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductViewModel
 import com.example.scamazon_frontend.ui.screens.auth.AuthViewModel
 import com.example.scamazon_frontend.ui.screens.cart.CartViewModel
@@ -134,6 +135,16 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             val adminRepository = AdminRepository(adminService, productService, categoryService, brandService)
             @Suppress("UNCHECKED_CAST")
             return AdminCategoryViewModel(adminRepository) as T
+        }
+
+        if (modelClass.isAssignableFrom(AdminOrderViewModel::class.java)) {
+            val adminService = retrofit.create(AdminService::class.java)
+            val productService = retrofit.create(ProductService::class.java)
+            val categoryService = retrofit.create(CategoryService::class.java)
+            val brandService = retrofit.create(BrandService::class.java)
+            val adminRepository = AdminRepository(adminService, productService, categoryService, brandService)
+            @Suppress("UNCHECKED_CAST")
+            return AdminOrderViewModel(adminRepository) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class")

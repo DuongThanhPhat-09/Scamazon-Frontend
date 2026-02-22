@@ -2,11 +2,27 @@ package com.example.scamazon_frontend.data.remote
 
 import com.example.scamazon_frontend.core.network.ApiResponse
 import com.example.scamazon_frontend.data.models.admin.*
+import com.example.scamazon_frontend.data.models.order.OrderDetailDataDto
+import com.example.scamazon_frontend.data.models.order.OrderSummaryDto
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
 
 interface AdminService {
+
+    // ==================== Order Management ====================
+
+    @GET("/api/admin/orders")
+    suspend fun getAdminOrders(): Response<ApiResponse<List<OrderSummaryDto>>>
+
+    @GET("/api/admin/orders/{id}")
+    suspend fun getAdminOrderDetail(@Path("id") id: Int): Response<ApiResponse<OrderDetailDataDto>>
+
+    @PUT("/api/admin/orders/{id}/status")
+    suspend fun updateOrderStatus(
+        @Path("id") id: Int,
+        @Body request: Map<String, String>
+    ): Response<ApiResponse<Any>>
 
     // ==================== Dashboard ====================
 
