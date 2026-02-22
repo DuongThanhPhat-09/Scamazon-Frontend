@@ -14,4 +14,10 @@ interface AuthService {
 
     @POST("/api/auth/register")
     suspend fun register(@Body request: RegisterRequest): Response<ApiResponse<AuthResponse>>
+
+    @POST("/api/auth/fcm-token")
+    suspend fun saveFcmToken(@Body request: Map<String, String>): Response<ApiResponse<Any>>
+
+    @POST("/api/auth/logout")
+    suspend fun logout(@Body request: Map<String, String?>): Response<ApiResponse<Any>>
 }

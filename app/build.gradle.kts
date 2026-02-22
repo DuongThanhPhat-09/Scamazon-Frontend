@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -57,6 +58,13 @@ dependencies {
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
+
+    // OpenStreetMap (free alternative to Google Maps)
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
 
     // Material Icons Extended
     implementation(libs.androidx.compose.material.icons.extended)

@@ -37,6 +37,8 @@ fun AccountScreen(
     onNavigateToOrders: () -> Unit = {},
     onNavigateToWishlist: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onNavigateToChat: () -> Unit = {},
+    onNavigateToMap: () -> Unit = {},
     onNavigateToLogin: () -> Unit = {}
 ) {
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
@@ -124,6 +126,25 @@ fun AccountScreen(
                 title = "Payment Methods",
                 subtitle = "Manage payment options",
                 onClick = { /* Navigate to payment */ }
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 16.dp),
+                color = BorderLight
+            )
+
+            AccountMenuItem(
+                icon = Icons.Outlined.ChatBubbleOutline,
+                title = "Customer Support",
+                subtitle = "Chat with us online",
+                onClick = onNavigateToChat
+            )
+
+            AccountMenuItem(
+                icon = Icons.Outlined.Map,
+                title = "Store Location",
+                subtitle = "Visit our flagship store",
+                onClick = onNavigateToMap
             )
 
             HorizontalDivider(

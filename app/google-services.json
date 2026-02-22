@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "219121260099",
+    "project_id": "swd-push-notification",
+    "storage_bucket": "swd-push-notification.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:219121260099:android:5312466c7b75a7f62666f6",
+        "android_client_info": {
+          "package_name": "com.example.scamazon_frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDL617jXY_WsKxx9JI-3sh1krYPsQYt60s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:219121260099:android:59cc57e594834fee2666f6",
+        "android_client_info": {
+          "package_name": "com.igcse.learninghubmobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDL617jXY_WsKxx9JI-3sh1krYPsQYt60s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
