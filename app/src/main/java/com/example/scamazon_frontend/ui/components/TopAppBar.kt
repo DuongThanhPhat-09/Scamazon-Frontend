@@ -26,6 +26,8 @@ fun LafyuuMainAppBar(
     onSearchClick: () -> Unit = {},
     onFavoriteClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
+    onMapClick: () -> Unit = {},
+    onChatClick: () -> Unit = {},
     notificationBadge: Int = 0,
     modifier: Modifier = Modifier
 ) {
@@ -39,7 +41,7 @@ fun LafyuuMainAppBar(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             // Search Field
             LafyuuSearchField(
@@ -54,6 +56,24 @@ fun LafyuuMainAppBar(
                 Icon(
                     imageVector = Icons.Default.FavoriteBorder,
                     contentDescription = "Favorites",
+                    tint = TextSecondary
+                )
+            }
+
+            // Map Location Icon
+            IconButton(onClick = onMapClick) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = "Map",
+                    tint = TextSecondary
+                )
+            }
+
+            // Chat Support Icon
+            IconButton(onClick = onChatClick) {
+                Icon(
+                    imageVector = Icons.Default.ChatBubbleOutline,
+                    contentDescription = "Chat",
                     tint = TextSecondary
                 )
             }

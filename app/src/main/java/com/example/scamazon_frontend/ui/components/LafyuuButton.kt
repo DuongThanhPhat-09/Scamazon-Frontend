@@ -129,7 +129,8 @@ fun LafyuuOutlinedButton(
             fontFamily = Poppins,
             fontWeight = FontWeight.SemiBold,
             fontSize = 15.sp,
-            letterSpacing = 0.5.sp
+            letterSpacing = 0.5.sp,
+            color = if (enabled) PrimaryBlue else ButtonDisabled
         )
     }
 }

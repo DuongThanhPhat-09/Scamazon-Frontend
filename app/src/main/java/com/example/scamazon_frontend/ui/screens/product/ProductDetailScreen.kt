@@ -320,7 +320,7 @@ private fun ProductImageSection(
     isFavorite: Boolean,
     onFavoriteClick: () -> Unit
 ) {
-    val primaryImage = images.firstOrNull { it.isPrimary } ?: images.firstOrNull()
+    val primaryImage = images.firstOrNull { it.isPrimary == true } ?: images.firstOrNull()
     var selectedIndex by remember { mutableStateOf(0) }
 
     Box(

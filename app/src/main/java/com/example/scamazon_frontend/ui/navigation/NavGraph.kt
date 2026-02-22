@@ -12,6 +12,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scamazon_frontend.ui.screens.admin.account.AdminAccountScreen
 import com.example.scamazon_frontend.ui.screens.admin.category.AdminCategoryFormScreen
 import com.example.scamazon_frontend.ui.screens.admin.category.AdminCategoryListScreen
@@ -107,6 +109,12 @@ fun NavGraph(
                 },
                 onNavigateToWishlist = {
                     navController.navigate(Screen.Wishlist.route)
+                },
+                onNavigateToMap = {
+                    navController.navigate(Screen.Map.route)
+                },
+                onNavigateToChat = {
+                    navController.navigate(Screen.Chat.route)
                 }
             )
         }
@@ -138,6 +146,12 @@ fun NavGraph(
                 },
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
+                },
+                onNavigateToChat = {
+                    navController.navigate(Screen.Chat.route)
+                },
+                onNavigateToMap = {
+                    navController.navigate(Screen.Map.route)
                 },
                 onNavigateToLogin = {
                     navController.navigate(Screen.Login.route) {
@@ -370,7 +384,12 @@ fun NavGraph(
         }
 
         composable(route = Screen.Notifications.route) {
-            PlaceholderScreen(screenName = "Notifications")
+            val context = LocalContext.current
+            val viewModel: com.example.scamazon_frontend.ui.screens.notification.NotificationViewModel = viewModel(factory = com.example.scamazon_frontend.di.ViewModelFactory(context))
+            com.example.scamazon_frontend.ui.screens.notification.NotificationScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(route = Screen.Settings.route) {
@@ -378,11 +397,18 @@ fun NavGraph(
         }
 
         composable(route = Screen.Map.route) {
-            PlaceholderScreen(screenName = "Store Location")
+            com.example.scamazon_frontend.ui.screens.map.MapScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(route = Screen.Chat.route) {
-            PlaceholderScreen(screenName = "Chat Support")
+            val context = LocalContext.current
+            val viewModel: com.example.scamazon_frontend.ui.screens.chat.ChatViewModel = viewModel(factory = com.example.scamazon_frontend.di.ViewModelFactory(context))
+            com.example.scamazon_frontend.ui.screens.chat.ChatScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(route = Screen.ForgotPassword.route) {
@@ -411,7 +437,39 @@ fun NavGraph(
         // ADMIN SCREENS
         // ==========================================
         composable(route = Screen.AdminDashboard.route) {
-            AdminDashboardScreen()
+            com.example.scamazon_frontend.ui.screens.admin.dashboard.AdminDashboardScreen(
+                onNavigateToChat = {
+                    navController.navigate(Screen.AdminChatList.route)
+                }
+            )
+        }
+
+        composable(route = Screen.AdminChatList.route) {
+            val context = LocalContext.current
+            val viewModel: com.example.scamazon_frontend.ui.screens.admin.chat.AdminChatListViewModel = viewModel(factory = com.example.scamazon_frontend.di.ViewModelFactory(context))
+            com.example.scamazon_frontend.ui.screens.admin.chat.AdminChatListScreen(
+                viewModel = viewModel,
+                onNavigateToChatDetail = { chatRoomId ->
+                    navController.navigate(Screen.AdminChatDetail.createRoute(chatRoomId))
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.AdminChatDetail.route,
+            arguments = listOf(
+                navArgument("chatRoomId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val chatRoomId = backStackEntry.arguments?.getInt("chatRoomId") ?: 0
+            val context = LocalContext.current
+            val viewModel: com.example.scamazon_frontend.ui.screens.admin.chat.AdminChatDetailViewModel = viewModel(factory = com.example.scamazon_frontend.di.ViewModelFactory(context))
+            com.example.scamazon_frontend.ui.screens.admin.chat.AdminChatDetailScreen(
+                chatRoomId = chatRoomId,
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(route = Screen.AdminProducts.route) {

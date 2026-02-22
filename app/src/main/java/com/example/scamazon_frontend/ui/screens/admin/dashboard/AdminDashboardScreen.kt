@@ -30,7 +30,8 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminDashboardScreen(
-    viewModel: AdminDashboardViewModel = viewModel(factory = ViewModelFactory(LocalContext.current))
+    viewModel: AdminDashboardViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
+    onNavigateToChat: () -> Unit = {}
 ) {
     val statsState by viewModel.statsState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -46,7 +47,15 @@ fun AdminDashboardScreen(
                         color = TextPrimary
                     )
                 },
-                actions = {},
+                actions = {
+                    IconButton(onClick = onNavigateToChat) {
+                        Icon(
+                            imageVector = Icons.Default.ChatBubbleOutline,
+                            contentDescription = "Customer Chats",
+                            tint = Navy
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = BackgroundWhite
                 )
@@ -81,9 +90,9 @@ fun AdminDashboardScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = { viewModel.loadStats() },
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue, contentColor = White)
                         ) {
-                            Text("Retry", fontFamily = Poppins)
+                            Text("Retry", fontFamily = Poppins, color = White)
                         }
                     }
                 }
@@ -252,6 +261,18 @@ private fun OrdersSummaryCard(stats: DashboardStatsDto) {
                 color = TextPrimary
             )
             Spacer(modifier = Modifier.height(12.dp))
+            
+            // Bar Chart
+            val chartData = listOf(
+                "Pending" to stats.orders.pending.toFloat(),
+                "Confirmed" to stats.orders.confirmed.toFloat(),
+                "Shipping" to stats.orders.shipping.toFloat(),
+                "Delivered" to stats.orders.delivered.toFloat()
+            )
+            SimpleBarChart(data = chartData, color = PrimaryBlue)
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
             OrderStatusRow("Pending", stats.orders.pending, AccentGold)
             OrderStatusRow("Confirmed", stats.orders.confirmed, PrimaryBlue)
             OrderStatusRow("Shipping", stats.orders.shipping, StatusInfo)
@@ -310,9 +331,59 @@ private fun RevenueSummaryCard(stats: DashboardStatsDto) {
                 color = TextPrimary
             )
             Spacer(modifier = Modifier.height(12.dp))
+            
+            // Bar Chart
+            val chartData = listOf(
+                "Today" to stats.revenue.today.toFloat(),
+                "Week" to stats.revenue.week.toFloat(),
+                "Month" to stats.revenue.month.toFloat()
+            )
+            SimpleBarChart(data = chartData, color = StatusSuccess)
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
             RevenueRow("Today", stats.revenue.today)
             RevenueRow("This Week", stats.revenue.week)
             RevenueRow("This Month", stats.revenue.month)
+        }
+    }
+}
+
+@Composable
+private fun SimpleBarChart(
+    data: List<Pair<String, Float>>,
+    color: Color
+) {
+    val max = data.maxOfOrNull { it.second } ?: 1f
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(120.dp)
+            .padding(top = 8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        data.forEach { (label, value) ->
+            val heightRatio = if (max == 0f) 0f else value / max
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.4f)
+                        .fillMaxHeight(heightRatio.coerceAtLeast(0.05f))
+                        .background(color, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = label,
+                    fontSize = 10.sp,
+                    color = TextSecondary,
+                    maxLines = 1
+                )
+            }
         }
     }
 }

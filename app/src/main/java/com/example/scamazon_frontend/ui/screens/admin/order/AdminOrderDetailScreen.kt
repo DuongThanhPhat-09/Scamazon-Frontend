@@ -362,6 +362,7 @@ private fun StatusUpdateCard(
                             shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = PrimaryBlue,
+                                contentColor = White,
                                 disabledContainerColor = ButtonDisabled
                             )
                         ) {
@@ -376,7 +377,8 @@ private fun StatusUpdateCard(
                                     text = "Mark as ${nextStatus.replaceFirstChar { it.uppercase() }}",
                                     fontFamily = Poppins,
                                     fontWeight = FontWeight.SemiBold,
-                                    fontSize = 12.sp
+                                    fontSize = 12.sp,
+                                    color = White
                                 )
                             }
                         }

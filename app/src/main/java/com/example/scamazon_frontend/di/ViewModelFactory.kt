@@ -52,7 +52,7 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             val authRepository = AuthRepository(authService)
             val tokenManager = TokenManager(context)
             @Suppress("UNCHECKED_CAST")
-            return AuthViewModel(authRepository, tokenManager) as T
+            return AuthViewModel(authRepository, tokenManager, authService) as T
         }
 
         if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
@@ -174,6 +174,38 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             val favoriteRepository = FavoriteRepository(favoriteService)
             @Suppress("UNCHECKED_CAST")
             return FavoriteViewModel(favoriteRepository) as T
+        }
+
+        // Milestone 4 ViewModels
+        if (modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.chat.ChatViewModel::class.java)) {
+            val chatService = retrofit.create(com.example.scamazon_frontend.data.remote.ChatService::class.java)
+            val uploadService = retrofit.create(com.example.scamazon_frontend.data.remote.UploadService::class.java)
+            val chatRepository = com.example.scamazon_frontend.data.repository.ChatRepository(chatService, uploadService)
+            @Suppress("UNCHECKED_CAST")
+            return com.example.scamazon_frontend.ui.screens.chat.ChatViewModel(chatRepository, signalRManager) as T
+        }
+
+        if (modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.admin.chat.AdminChatListViewModel::class.java)) {
+            val chatService = retrofit.create(com.example.scamazon_frontend.data.remote.ChatService::class.java)
+            val uploadService = retrofit.create(com.example.scamazon_frontend.data.remote.UploadService::class.java)
+            val chatRepository = com.example.scamazon_frontend.data.repository.ChatRepository(chatService, uploadService)
+            @Suppress("UNCHECKED_CAST")
+            return com.example.scamazon_frontend.ui.screens.admin.chat.AdminChatListViewModel(chatRepository) as T
+        }
+
+        if (modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.admin.chat.AdminChatDetailViewModel::class.java)) {
+            val chatService = retrofit.create(com.example.scamazon_frontend.data.remote.ChatService::class.java)
+            val uploadService = retrofit.create(com.example.scamazon_frontend.data.remote.UploadService::class.java)
+            val chatRepository = com.example.scamazon_frontend.data.repository.ChatRepository(chatService, uploadService)
+            @Suppress("UNCHECKED_CAST")
+            return com.example.scamazon_frontend.ui.screens.admin.chat.AdminChatDetailViewModel(chatRepository, signalRManager) as T
+        }
+
+        if (modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.notification.NotificationViewModel::class.java)) {
+            val notificationService = retrofit.create(com.example.scamazon_frontend.data.remote.NotificationService::class.java)
+            val notificationRepository = com.example.scamazon_frontend.data.repository.NotificationRepository(notificationService)
+            @Suppress("UNCHECKED_CAST")
+            return com.example.scamazon_frontend.ui.screens.notification.NotificationViewModel(notificationRepository, signalRManager) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class")

@@ -94,13 +94,15 @@ fun AdminProductFormScreen(
             selectedCategoryId = product.category?.id
             selectedBrandId = product.brand?.id
             isFeatured = product.isFeatured ?: false
-            imageUrls = product.images.map {
-                ProductImageRequest(
-                    url = it.imageUrl,
-                    isPrimary = it.isPrimary,
-                    sortOrder = it.sortOrder
-                )
-            }
+            imageUrls = product.images
+                .filter { !it.imageUrl.isNullOrBlank() }
+                .map {
+                    ProductImageRequest(
+                        url = it.imageUrl!!,
+                        isPrimary = it.isPrimary ?: false,
+                        sortOrder = it.sortOrder ?: 0
+                    )
+                }
         }
     }
 
@@ -396,6 +398,14 @@ fun AdminProductFormScreen(
                         Toast.makeText(context, "Name and Price are required", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
+                    
+                    val finalImages = imageUrls.mapIndexed { index, img ->
+                        img.copy(
+                            isPrimary = index == 0,
+                            sortOrder = index
+                        )
+                    }
+
                     if (isEdit && formProductId != null) {
                         viewModel.updateProduct(
                             formProductId!!,
@@ -409,7 +419,7 @@ fun AdminProductFormScreen(
                                 categoryId = selectedCategoryId,
                                 brandId = selectedBrandId,
                                 isFeatured = isFeatured,
-                                images = imageUrls.ifEmpty { null }
+                                images = finalImages // always pass list to override backend state
                             )
                         )
                     } else {
@@ -424,7 +434,7 @@ fun AdminProductFormScreen(
                                 categoryId = selectedCategoryId,
                                 brandId = selectedBrandId,
                                 isFeatured = isFeatured,
-                                images = imageUrls.ifEmpty { null }
+                                images = finalImages.ifEmpty { null }
                             )
                         )
                     }
@@ -433,7 +443,7 @@ fun AdminProductFormScreen(
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue, contentColor = White),
                 enabled = saveState !is Resource.Loading
             ) {
                 if (saveState is Resource.Loading) {
@@ -446,7 +456,8 @@ fun AdminProductFormScreen(
                         text = if (isEdit) "Update Product" else "Create Product",
                         fontFamily = Poppins,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp
+                        fontSize = 16.sp,
+                        color = White
                     )
                 }
             }

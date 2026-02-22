@@ -7,37 +7,37 @@ data class ProductDto(
     @SerializedName("name") val name: String,
     @SerializedName("slug") val slug: String,
     @SerializedName("description") val description: String?,
-    @SerializedName("detail_description") val detailDescription: String?,
+    @SerializedName(value = "detail_description", alternate = ["detailDescription"]) val detailDescription: String?,
     @SerializedName("price") val price: Double,
-    @SerializedName("sale_price") val salePrice: Double?,
-    @SerializedName("stock_quantity") val stockQuantity: Int,
-    @SerializedName("category_id") val categoryId: Int?,
-    @SerializedName("brand_id") val brandId: Int?,
-    @SerializedName("primary_image") val primaryImage: String?,
+    @SerializedName(value = "sale_price", alternate = ["salePrice"]) val salePrice: Double?,
+    @SerializedName(value = "stock_quantity", alternate = ["stockQuantity"]) val stockQuantity: Int,
+    @SerializedName(value = "category_id", alternate = ["categoryId"]) val categoryId: Int?,
+    @SerializedName(value = "brand_id", alternate = ["brandId"]) val brandId: Int?,
+    @SerializedName(value = "primary_image", alternate = ["primaryImage", "PrimaryImage"]) val primaryImage: String?,
     @SerializedName("images") val images: List<ProductImageDto>? = null,
-    @SerializedName("avg_rating") val avgRating: Float?,
-    @SerializedName("sold_count") val soldCount: Int?,
-    @SerializedName("is_active") val isActive: Boolean,
-    @SerializedName("is_featured") val isFeatured: Boolean,
-    @SerializedName("created_at") val createdAt: String
+    @SerializedName(value = "avg_rating", alternate = ["avgRating"]) val avgRating: Float?,
+    @SerializedName(value = "sold_count", alternate = ["soldCount"]) val soldCount: Int?,
+    @SerializedName(value = "is_active", alternate = ["isActive"]) val isActive: Boolean,
+    @SerializedName(value = "is_featured", alternate = ["isFeatured"]) val isFeatured: Boolean,
+    @SerializedName(value = "created_at", alternate = ["createdAt"]) val createdAt: String?
 )
 
 data class ProductImageDto(
     @SerializedName("id") val id: Int,
-    @SerializedName("image_url") val imageUrl: String,
-    @SerializedName("is_primary") val isPrimary: Boolean,
-    @SerializedName("sort_order") val sortOrder: Int
+    @SerializedName(value = "image_url", alternate = ["imageUrl", "ImageUrl"]) val imageUrl: String? = null,
+    @SerializedName(value = "is_primary", alternate = ["isPrimary", "IsPrimary"]) val isPrimary: Boolean? = false,
+    @SerializedName(value = "sort_order", alternate = ["sortOrder", "SortOrder"]) val sortOrder: Int? = 0
 )
 
 data class ProductPaginationResponse(
-    @SerializedName("products") val items: List<ProductDto>,
+    @SerializedName(value = "products", alternate = ["data", "items"]) val items: List<ProductDto>,
     @SerializedName("pagination") val pagination: PaginationMetadata
 )
 
 data class PaginationMetadata(
-    @SerializedName("current_page") val currentPage: Int,
-    @SerializedName("total_pages") val totalPages: Int,
-    @SerializedName("total_items") val totalItems: Int
+    @SerializedName(value = "current_page", alternate = ["currentPage"]) val currentPage: Int,
+    @SerializedName(value = "total_pages", alternate = ["totalPages"]) val totalPages: Int,
+    @SerializedName(value = "total_items", alternate = ["totalItems"]) val totalItems: Int
 )
 
 // ==================== Product Detail ====================

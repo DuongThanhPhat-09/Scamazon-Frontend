@@ -269,7 +269,7 @@ fun AdminCategoryFormScreen(
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue, contentColor = White),
                 enabled = saveState !is Resource.Loading
             ) {
                 if (saveState is Resource.Loading) {
@@ -279,7 +279,8 @@ fun AdminCategoryFormScreen(
                         text = if (isEdit) "Update" else "Create",
                         fontFamily = Poppins,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp
+                        fontSize = 16.sp,
+                        color = White
                     )
                 }
             }

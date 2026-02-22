@@ -1,0 +1,44 @@
+At line:1 char:1201
++ ... Screen(  viewModel: NotificationViewModel,  onNavigateBack: () - = {} ...
++                                                                  ~
+An expression was expected after '('.
+At line:1 char:1272
++ ...  {  val state by viewModel.notificationsState.collectAsState()  Scaff ...
++                                                                  ~
+An expression was expected after '('.
+At line:1 char:1511
++ ... utils.Resource.Loading - Box(modifier = Modifier.fillMaxSize().paddin ...
++                                                                  ~
+An expression was expected after '('.
+At line:1 char:1521
++ ... urce.Loading - Box(modifier = Modifier.fillMaxSize().padding(paddingV ...
++                                                                  ~
+Missing ')' in method call.
+At line:1 char:1409
++ ... ck = onNavigateBack  )  }  ) { paddingValues - when (state) {  is com ...
++                                                                 ~
+Missing closing '}' in statement block or type definition.
+At line:1 char:1378
++ ... tle = Notifications,  onBackClick = onNavigateBack  )  }  ) { padding ...
++                                                                 ~
+Missing closing '}' in statement block or type definition.
+At line:1 char:1212
++ ... wModel: NotificationViewModel,  onNavigateBack: () - = {} ) {  val st ...
++                                                                 ~
+Missing closing '}' in statement block or type definition.
+At line:1 char:1572
++ ... .padding(paddingValues), contentAlignment = Alignment.Center) {  Circ ...
++                                                                 ~
+Unexpected token ')' in expression or statement.
+At line:1 char:1628
++ ... nter) {  CircularProgressIndicator(color = PrimaryBlue)  }  }  is com ...
++                                                                 ~
+Unexpected token '}' in expression or statement.
+At line:1 char:1728
++ ... e.utils.Resource.Error - Box(modifier = Modifier.fillMaxSize().paddin ...
++                                                                  ~
+An expression was expected after '('.
+Not all parse errors were reported.  Correct the reported errors and try again.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : ExpectedExpression
+ 

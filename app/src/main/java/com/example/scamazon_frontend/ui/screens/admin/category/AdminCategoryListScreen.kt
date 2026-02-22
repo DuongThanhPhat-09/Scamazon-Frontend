@@ -193,8 +193,8 @@ private fun CategoriesTab(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(categoriesState.message ?: "Error", color = StatusError, fontFamily = Poppins)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)) {
-                        Text("Retry", fontFamily = Poppins)
+                    Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue, contentColor = White)) {
+                        Text("Retry", fontFamily = Poppins, color = White)
                     }
                 }
             }
@@ -300,8 +300,8 @@ private fun BrandsTab(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(brandsState.message ?: "Error", color = StatusError, fontFamily = Poppins)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)) {
-                        Text("Retry", fontFamily = Poppins)
+                    Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue, contentColor = White)) {
+                        Text("Retry", fontFamily = Poppins, color = White)
                     }
                 }
             }

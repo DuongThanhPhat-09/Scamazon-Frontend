@@ -22,6 +22,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.scamazon_frontend.core.utils.formatPrice
 import com.example.scamazon_frontend.ui.theme.*
 
@@ -59,20 +62,19 @@ fun ProductCard(
                     .fillMaxWidth()
                     .height(Dimens.ProductCardImageHeight)
             ) {
-                // Placeholder for image - In real app use Coil/Glide
-                Box(
+                // Product Image
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(productImage)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = productName,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(BackgroundLight)
-                        .clip(RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Image",
-                        color = TextHint,
-                        style = Typography.bodySmall
-                    )
-                }
+                        .clip(RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp))
+                )
 
                 // Discount Badge
                 discount?.let {
@@ -222,18 +224,18 @@ fun ProductCardHorizontal(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Product Image
-            Box(
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(productImage)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = productName,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(Dimens.ProductImageSize)
-                    .background(BackgroundLight, RoundedCornerShape(5.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Img",
-                    color = TextHint,
-                    style = Typography.bodySmall
-                )
-            }
+                    .background(BackgroundLight, RoundedCornerShape(5.dp))
+                    .clip(RoundedCornerShape(5.dp))
+            )
 
             // Product Info
             Column(

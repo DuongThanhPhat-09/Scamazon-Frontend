@@ -33,7 +33,9 @@ fun HomeScreen(
     onNavigateToProductDetail: (String) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
-    onNavigateToWishlist: () -> Unit = {}
+    onNavigateToWishlist: () -> Unit = {},
+    onNavigateToMap: () -> Unit = {},
+    onNavigateToChat: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     
@@ -56,6 +58,8 @@ fun HomeScreen(
             onSearchClick = onNavigateToSearch,
             onFavoriteClick = onNavigateToWishlist,
             onNotificationClick = onNavigateToNotifications,
+            onMapClick = onNavigateToMap,
+            onChatClick = onNavigateToChat,
             notificationBadge = 3
         )
 

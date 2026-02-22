@@ -30,7 +30,7 @@ val Typography = Typography(
         fontSize = 32.sp,
         lineHeight = 40.sp,
         letterSpacing = 0.sp,
-        color = TextPrimary
+
     ),
     displayMedium = TextStyle(
         fontFamily = Poppins,
@@ -38,7 +38,7 @@ val Typography = Typography(
         fontSize = 28.sp,
         lineHeight = 36.sp,
         letterSpacing = 0.sp,
-        color = TextPrimary
+
     ),
     displaySmall = TextStyle(
         fontFamily = Poppins,
@@ -46,7 +46,7 @@ val Typography = Typography(
         fontSize = 24.sp,
         lineHeight = 32.sp,
         letterSpacing = 0.sp,
-        color = TextPrimary
+
     ),
 
     // Headline styles
@@ -56,7 +56,7 @@ val Typography = Typography(
         fontSize = 20.sp,
         lineHeight = 28.sp,
         letterSpacing = 0.sp,
-        color = TextPrimary
+
     ),
     headlineMedium = TextStyle(
         fontFamily = Poppins,
@@ -64,7 +64,7 @@ val Typography = Typography(
         fontSize = 18.sp,
         lineHeight = 26.sp,
         letterSpacing = 0.sp,
-        color = TextPrimary
+
     ),
     headlineSmall = TextStyle(
         fontFamily = Poppins,
@@ -72,7 +72,7 @@ val Typography = Typography(
         fontSize = 16.sp,
         lineHeight = 24.sp,
         letterSpacing = 0.sp,
-        color = TextPrimary
+
     ),
 
     // Title styles
@@ -82,7 +82,7 @@ val Typography = Typography(
         fontSize = 16.sp,
         lineHeight = 24.sp,
         letterSpacing = 0.sp,
-        color = TextPrimary
+
     ),
     titleMedium = TextStyle(
         fontFamily = Poppins,
@@ -90,7 +90,7 @@ val Typography = Typography(
         fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.15.sp,
-        color = TextPrimary
+
     ),
     titleSmall = TextStyle(
         fontFamily = Poppins,
@@ -98,7 +98,7 @@ val Typography = Typography(
         fontSize = 12.sp,
         lineHeight = 18.sp,
         letterSpacing = 0.1.sp,
-        color = TextPrimary
+
     ),
 
     // Body styles
@@ -108,7 +108,7 @@ val Typography = Typography(
         fontSize = 14.sp,
         lineHeight = 22.sp,
         letterSpacing = 0.5.sp,
-        color = TextSecondary
+
     ),
     bodyMedium = TextStyle(
         fontFamily = Poppins,
@@ -116,7 +116,7 @@ val Typography = Typography(
         fontSize = 12.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.25.sp,
-        color = TextSecondary
+
     ),
     bodySmall = TextStyle(
         fontFamily = Poppins,
@@ -124,7 +124,7 @@ val Typography = Typography(
         fontSize = 10.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.4.sp,
-        color = TextSecondary
+
     ),
 
     // Label styles
@@ -134,7 +134,7 @@ val Typography = Typography(
         fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.1.sp,
-        color = TextPrimary
+
     ),
     labelMedium = TextStyle(
         fontFamily = Poppins,
@@ -142,7 +142,7 @@ val Typography = Typography(
         fontSize = 12.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp,
-        color = TextPrimary
+
     ),
     labelSmall = TextStyle(
         fontFamily = Poppins,
@@ -150,6 +150,6 @@ val Typography = Typography(
         fontSize = 10.sp,
         lineHeight = 14.sp,
         letterSpacing = 0.5.sp,
-        color = TextSecondary
+
     )
 )
