@@ -14,6 +14,7 @@ import com.example.scamazon_frontend.data.remote.OrderService
 import com.example.scamazon_frontend.data.remote.PaymentService
 import com.example.scamazon_frontend.data.remote.ProductService
 import com.example.scamazon_frontend.data.remote.ProfileService
+import com.example.scamazon_frontend.data.remote.ReviewService
 import com.example.scamazon_frontend.data.repository.AdminRepository
 import com.example.scamazon_frontend.data.repository.AuthRepository
 import com.example.scamazon_frontend.data.repository.CartRepository
@@ -21,6 +22,7 @@ import com.example.scamazon_frontend.data.repository.HomeRepository
 import com.example.scamazon_frontend.data.repository.OrderRepository
 import com.example.scamazon_frontend.data.repository.ProductRepository
 import com.example.scamazon_frontend.data.repository.ProfileRepository
+import com.example.scamazon_frontend.data.repository.ReviewRepository
 import com.example.scamazon_frontend.ui.screens.admin.category.AdminCategoryViewModel
 import com.example.scamazon_frontend.ui.screens.admin.dashboard.AdminDashboardViewModel
 import com.example.scamazon_frontend.ui.screens.admin.order.AdminOrderViewModel
@@ -34,6 +36,7 @@ import com.example.scamazon_frontend.ui.screens.order.OrderHistoryViewModel
 import com.example.scamazon_frontend.ui.screens.product.ProductDetailViewModel
 import com.example.scamazon_frontend.ui.screens.product.ProductListViewModel
 import com.example.scamazon_frontend.ui.screens.profile.ProfileViewModel
+import com.example.scamazon_frontend.ui.screens.review.ReviewViewModel
 import com.example.scamazon_frontend.ui.screens.search.SearchViewModel
 
 class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
@@ -153,6 +156,13 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             val paymentService = retrofit.create(PaymentService::class.java)
             @Suppress("UNCHECKED_CAST")
             return PaymentQRViewModel(paymentService) as T
+        }
+
+        if (modelClass.isAssignableFrom(ReviewViewModel::class.java)) {
+            val reviewService = retrofit.create(ReviewService::class.java)
+            val reviewRepository = ReviewRepository(reviewService)
+            @Suppress("UNCHECKED_CAST")
+            return ReviewViewModel(reviewRepository) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class")

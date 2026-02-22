@@ -33,6 +33,7 @@ import com.example.scamazon_frontend.ui.screens.product.ProductDetailScreen
 import com.example.scamazon_frontend.ui.screens.product.ProductListScreen
 import com.example.scamazon_frontend.ui.screens.profile.AccountScreen
 import com.example.scamazon_frontend.ui.screens.profile.EditProfileScreen
+import com.example.scamazon_frontend.ui.screens.review.ReviewScreen
 import com.example.scamazon_frontend.ui.screens.search.ExploreScreen
 import com.example.scamazon_frontend.ui.theme.TextSecondary
 import com.example.scamazon_frontend.ui.theme.Typography
@@ -163,8 +164,8 @@ fun NavGraph(
                 onNavigateToCart = {
                     navController.navigate(Screen.Cart.route)
                 },
-                onNavigateToReview = {
-                    navController.navigate(Screen.Review.createRoute(productId))
+                onNavigateToReview = { id ->
+                    navController.navigate(Screen.Review.createRoute(id, canWrite = false))
                 }
             )
         }
@@ -349,6 +350,9 @@ fun NavGraph(
                 orderId = orderId,
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onNavigateToReview = { productId ->
+                    navController.navigate(Screen.Review.createRoute(productId, canWrite = true))
                 }
             )
         }
@@ -380,10 +384,19 @@ fun NavGraph(
         composable(
             route = Screen.Review.route,
             arguments = listOf(
-                navArgument(NavArgs.PRODUCT_ID) { type = NavType.StringType }
+                navArgument(NavArgs.PRODUCT_ID) { type = NavType.StringType },
+                navArgument("canWrite") { type = NavType.StringType; defaultValue = "false" }
             )
-        ) {
-            PlaceholderScreen(screenName = "Reviews")
+        ) { backStackEntry ->
+            val productId = backStackEntry.arguments?.getString(NavArgs.PRODUCT_ID)?.toIntOrNull() ?: 0
+            val canWrite = backStackEntry.arguments?.getString("canWrite")?.toBoolean() ?: false
+            ReviewScreen(
+                productId = productId,
+                canWrite = canWrite,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         // ==========================================

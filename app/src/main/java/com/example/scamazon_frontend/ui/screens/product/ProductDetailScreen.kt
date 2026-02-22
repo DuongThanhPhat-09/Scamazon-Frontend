@@ -39,7 +39,7 @@ fun ProductDetailScreen(
     viewModel: ProductDetailViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {},
     onNavigateToCart: () -> Unit = {},
-    onNavigateToReview: () -> Unit = {}
+    onNavigateToReview: (Int) -> Unit = {}
 ) {
     var quantity by remember { mutableStateOf(1) }
     var isFavorite by remember { mutableStateOf(false) }
@@ -157,7 +157,7 @@ fun ProductDetailScreen(
                                     text = "($reviewCount Reviews)",
                                     style = Typography.bodySmall,
                                     color = TextSecondary,
-                                    modifier = Modifier.clickable { onNavigateToReview() }
+                                    modifier = Modifier.clickable { onNavigateToReview(product.id) }
                                 )
                             }
 
@@ -282,7 +282,7 @@ fun ProductDetailScreen(
                                 )
                                 LafyuuTextButton(
                                     text = "See All",
-                                    onClick = onNavigateToReview
+                                    onClick = { onNavigateToReview(product.id) }
                                 )
                             }
 
