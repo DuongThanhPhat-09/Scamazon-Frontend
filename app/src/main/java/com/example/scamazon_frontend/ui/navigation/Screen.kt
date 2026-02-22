@@ -45,8 +45,9 @@ sealed class Screen(val route: String) {
     object Checkout : Screen("checkout")
     object ShippingAddress : Screen("shipping_address")
     object PaymentMethod : Screen("payment_method")
-    object OrderSuccess : Screen("order_success/{orderId}") {
-        fun createRoute(orderId: String) = "order_success/$orderId"
+    object OrderSuccess : Screen("order_success/{orderId}/{orderCode}/{total}/{paymentMethod}") {
+        fun createRoute(orderId: String, orderCode: String = "", total: String = "0", paymentMethod: String = "cod") =
+            "order_success/$orderId/$orderCode/$total/$paymentMethod"
     }
 
     // ==========================================
@@ -77,8 +78,8 @@ sealed class Screen(val route: String) {
     object AdminDashboard : Screen("admin_dashboard")
     object AdminProducts : Screen("admin_products")
     object AdminProductAdd : Screen("admin_product_add")
-    object AdminProductEdit : Screen("admin_product_edit/{productId}") {
-        fun createRoute(productId: Int) = "admin_product_edit/$productId"
+    object AdminProductEdit : Screen("admin_product_edit/{productSlug}") {
+        fun createRoute(productSlug: String) = "admin_product_edit/$productSlug"
     }
     object AdminCategories : Screen("admin_categories")
     object AdminCategoryAdd : Screen("admin_category_add")
@@ -90,6 +91,13 @@ sealed class Screen(val route: String) {
         fun createRoute(brandId: Int) = "admin_brand_edit/$brandId"
     }
     object AdminAccount : Screen("admin_account")
+    object AdminOrders : Screen("admin_orders")
+    object AdminOrderDetail : Screen("admin_order_detail/{orderId}") {
+        fun createRoute(orderId: Int) = "admin_order_detail/$orderId"
+    }
+    object PaymentQR : Screen("payment_qr/{orderId}") {
+        fun createRoute(orderId: String) = "payment_qr/$orderId"
+    }
 }
 
 /**

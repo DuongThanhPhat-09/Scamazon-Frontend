@@ -34,6 +34,13 @@ sealed class AdminBottomNavItem(
         unselectedIcon = Icons.Outlined.Category
     )
 
+    object Orders : AdminBottomNavItem(
+        route = "admin_orders",
+        title = "Orders",
+        selectedIcon = Icons.Filled.ShoppingCart,
+        unselectedIcon = Icons.Outlined.ShoppingCart
+    )
+
     object Account : AdminBottomNavItem(
         route = "admin_account",
         title = "Account",
@@ -46,5 +53,6 @@ val adminBottomNavItems = listOf(
     AdminBottomNavItem.Dashboard,
     AdminBottomNavItem.Products,
     AdminBottomNavItem.Categories,
+    AdminBottomNavItem.Orders,
     AdminBottomNavItem.Account
 )

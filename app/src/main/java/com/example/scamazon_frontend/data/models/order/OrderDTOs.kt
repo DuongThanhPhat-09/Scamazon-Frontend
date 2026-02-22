@@ -72,3 +72,36 @@ data class PaymentInfoDto(
     @SerializedName("transactionId") val transactionId: String?,
     @SerializedName("paidAt") val paidAt: String?
 )
+
+// ==================== Admin Order ====================
+
+data class AdminOrderSummaryDto(
+    @SerializedName("id") val id: Int,
+    @SerializedName("orderCode") val orderCode: String,
+    @SerializedName("customerName") val customerName: String?,
+    @SerializedName("customerPhone") val customerPhone: String?,
+    @SerializedName("total") val total: Double,
+    @SerializedName("status") val status: String?,
+    @SerializedName("paymentMethod") val paymentMethod: String?,
+    @SerializedName("paymentStatus") val paymentStatus: String?,
+    @SerializedName("itemCount") val itemCount: Int,
+    @SerializedName("createdAt") val createdAt: String?
+)
+
+data class AdminOrderListDataDto(
+    @SerializedName("orders") val orders: List<AdminOrderSummaryDto> = emptyList(),
+    @SerializedName("totalCount") val totalCount: Int,
+    @SerializedName("page") val page: Int,
+    @SerializedName("limit") val limit: Int
+)
+
+// ==================== Payment Status (Polling) ====================
+
+data class PaymentStatusDataDto(
+    @SerializedName("orderCode") val orderCode: String,
+    @SerializedName("paymentStatus") val paymentStatus: String,
+    @SerializedName("orderStatus") val orderStatus: String,
+    @SerializedName("paymentMethod") val paymentMethod: String,
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("paidAt") val paidAt: String?
+)

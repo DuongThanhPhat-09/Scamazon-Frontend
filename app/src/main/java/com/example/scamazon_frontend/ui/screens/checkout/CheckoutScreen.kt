@@ -26,7 +26,7 @@ import com.example.scamazon_frontend.ui.theme.*
 fun CheckoutScreen(
     viewModel: CheckoutViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {},
-    onOrderSuccess: (String) -> Unit = {}
+    onOrderSuccess: (orderId: String, orderCode: String, total: String, paymentMethod: String) -> Unit = { _, _, _, _ -> }
 ) {
     val shippingName by viewModel.shippingName.collectAsStateWithLifecycle()
     val shippingPhone by viewModel.shippingPhone.collectAsStateWithLifecycle()
@@ -44,9 +44,13 @@ fun CheckoutScreen(
     LaunchedEffect(orderState) {
         when (orderState) {
             is Resource.Success -> {
-                val orderId = orderState?.data?.orderId?.toString() ?: ""
+                val data = orderState?.data
+                val orderId = data?.orderId?.toString() ?: ""
+                val orderCode = data?.orderCode ?: ""
+                val total = data?.total?.toString() ?: "0"
+                val pm = data?.paymentMethod ?: "cod"
                 viewModel.resetOrderState()
-                onOrderSuccess(orderId)
+                onOrderSuccess(orderId, orderCode, total, pm)
             }
             is Resource.Error -> {
                 snackbarHostState.showSnackbar(orderState?.message ?: "Order failed")
@@ -138,7 +142,7 @@ fun CheckoutScreen(
 
                 val paymentOptions = listOf(
                     "cod" to "Cash on Delivery (COD)",
-                    "vnpay" to "VNPay"
+                    "vnpay" to "Bank Transfer (QR)"
                 )
 
                 paymentOptions.forEach { (value, label) ->

@@ -37,7 +37,7 @@ import java.util.Locale
 fun AdminProductListScreen(
     viewModel: AdminProductViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateToAddProduct: () -> Unit = {},
-    onNavigateToEditProduct: (Int) -> Unit = {},
+    onNavigateToEditProduct: (String) -> Unit = {},
     onNavigateBack: () -> Unit = {}
 ) {
     val productsState by viewModel.productsState.collectAsStateWithLifecycle()
@@ -186,7 +186,7 @@ fun AdminProductListScreen(
                             items(products) { product ->
                                 AdminProductItem(
                                     product = product,
-                                    onEdit = { onNavigateToEditProduct(product.id) },
+                                    onEdit = { onNavigateToEditProduct(product.slug) },
                                     onDelete = { showDeleteDialog = product }
                                 )
                             }

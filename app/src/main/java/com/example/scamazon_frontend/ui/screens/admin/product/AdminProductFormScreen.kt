@@ -38,17 +38,19 @@ import com.example.scamazon_frontend.ui.theme.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminProductFormScreen(
-    productId: Int? = null,
+    productSlug: String? = null,
     viewModel: AdminProductViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val isEdit = productId != null && productId > 0
+    val isEdit = !productSlug.isNullOrBlank()
     val categoriesState by viewModel.categoriesState.collectAsStateWithLifecycle()
     val brandsState by viewModel.brandsState.collectAsStateWithLifecycle()
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
     val uploadState by viewModel.uploadState.collectAsStateWithLifecycle()
     val productDetailState by viewModel.productDetailState.collectAsStateWithLifecycle()
+
+    var formProductId by remember { mutableStateOf<Int?>(null) }
 
     // Form fields
     var name by remember { mutableStateOf("") }
@@ -72,9 +74,9 @@ fun AdminProductFormScreen(
     }
 
     // Load product detail for editing
-    LaunchedEffect(productId) {
-        if (isEdit && productId != null) {
-            viewModel.loadProductDetail(productId.toString())
+    LaunchedEffect(productSlug) {
+        if (isEdit && productSlug != null) {
+            viewModel.loadProductDetail(productSlug)
         }
     }
 
@@ -82,6 +84,7 @@ fun AdminProductFormScreen(
     LaunchedEffect(productDetailState) {
         if (productDetailState is Resource.Success) {
             val product = (productDetailState as Resource.Success).data!!
+            formProductId = product.id
             name = product.name
             price = product.price.toString()
             salePrice = product.salePrice?.toString() ?: ""
@@ -393,9 +396,9 @@ fun AdminProductFormScreen(
                         Toast.makeText(context, "Name and Price are required", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
-                    if (isEdit && productId != null) {
+                    if (isEdit && formProductId != null) {
                         viewModel.updateProduct(
-                            productId,
+                            formProductId!!,
                             UpdateProductRequest(
                                 name = name,
                                 price = price.toDoubleOrNull(),
