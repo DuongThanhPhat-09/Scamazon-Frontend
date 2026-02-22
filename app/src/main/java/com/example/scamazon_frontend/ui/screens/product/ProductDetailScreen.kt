@@ -31,21 +31,23 @@ import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.core.utils.formatPrice
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
+import com.example.scamazon_frontend.ui.screens.favorite.FavoriteViewModel
 import com.example.scamazon_frontend.ui.theme.*
 
 @Composable
 fun ProductDetailScreen(
     productId: String,
     viewModel: ProductDetailViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
+    favoriteViewModel: FavoriteViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {},
     onNavigateToCart: () -> Unit = {},
-    onNavigateToReview: () -> Unit = {}
+    onNavigateToReview: (Int) -> Unit = {}
 ) {
     var quantity by remember { mutableStateOf(1) }
-    var isFavorite by remember { mutableStateOf(false) }
 
     val productState by viewModel.productState.collectAsStateWithLifecycle()
     val addToCartState by viewModel.addToCartState.collectAsStateWithLifecycle()
+    val favoriteIds by favoriteViewModel.favoriteIds.collectAsStateWithLifecycle()
 
     // Load product on first composition
     LaunchedEffect(productId) {
@@ -128,8 +130,8 @@ fun ProductDetailScreen(
                         // Product Images
                         ProductImageSection(
                             images = product.images,
-                            isFavorite = isFavorite,
-                            onFavoriteClick = { isFavorite = !isFavorite }
+                            isFavorite = favoriteIds.contains(product.id),
+                            onFavoriteClick = { favoriteViewModel.toggleFavorite(product.id) }
                         )
 
                         // Product Info
@@ -157,7 +159,7 @@ fun ProductDetailScreen(
                                     text = "($reviewCount Reviews)",
                                     style = Typography.bodySmall,
                                     color = TextSecondary,
-                                    modifier = Modifier.clickable { onNavigateToReview() }
+                                    modifier = Modifier.clickable { onNavigateToReview(product.id) }
                                 )
                             }
 
@@ -282,7 +284,7 @@ fun ProductDetailScreen(
                                 )
                                 LafyuuTextButton(
                                     text = "See All",
-                                    onClick = onNavigateToReview
+                                    onClick = { onNavigateToReview(product.id) }
                                 )
                             }
 

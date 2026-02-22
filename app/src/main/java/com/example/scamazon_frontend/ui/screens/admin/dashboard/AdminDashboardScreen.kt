@@ -46,15 +46,7 @@ fun AdminDashboardScreen(
                         color = TextPrimary
                     )
                 },
-                actions = {
-                    IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(
-                            Icons.Filled.Refresh,
-                            contentDescription = "Refresh",
-                            tint = PrimaryBlue
-                        )
-                    }
-                },
+                actions = {},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = BackgroundWhite
                 )

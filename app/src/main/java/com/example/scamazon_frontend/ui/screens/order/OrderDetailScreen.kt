@@ -34,7 +34,8 @@ import com.example.scamazon_frontend.ui.theme.*
 fun OrderDetailScreen(
     orderId: Int,
     viewModel: OrderHistoryViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onNavigateToReview: (Int) -> Unit = {}
 ) {
     val orderDetailState by viewModel.orderDetailState.collectAsStateWithLifecycle()
 
@@ -71,7 +72,10 @@ fun OrderDetailScreen(
             }
             is Resource.Success -> {
                 val order = state.data!!
-                OrderDetailContent(order = order)
+                OrderDetailContent(
+                    order = order,
+                    onNavigateToReview = onNavigateToReview
+                )
             }
             null -> {
                 Box(
@@ -86,7 +90,12 @@ fun OrderDetailScreen(
 }
 
 @Composable
-private fun OrderDetailContent(order: OrderDetailDataDto) {
+private fun OrderDetailContent(
+    order: OrderDetailDataDto,
+    onNavigateToReview: (Int) -> Unit = {}
+) {
+    val isDelivered = order.status?.lowercase() == "delivered"
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(Dimens.ScreenPadding),
@@ -118,7 +127,21 @@ private fun OrderDetailContent(order: OrderDetailDataDto) {
             )
         }
         items(order.items) { item ->
-            OrderItemCard(item = item)
+            OrderItemCard(
+                item = item,
+                showReviewButton = isDelivered,
+                onReviewClick = { onNavigateToReview(item.productId) }
+            )
+        }
+
+        // Review section for delivered orders
+        if (isDelivered) {
+            item {
+                ReviewPromptSection(
+                    items = order.items,
+                    onReviewClick = onNavigateToReview
+                )
+            }
         }
 
         // Payment summary
@@ -352,74 +375,154 @@ private fun ShippingRow(
 }
 
 @Composable
-private fun OrderItemCard(item: OrderItemDto) {
+private fun OrderItemCard(
+    item: OrderItemDto,
+    showReviewButton: Boolean = false,
+    onReviewClick: () -> Unit = {}
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = White),
         border = androidx.compose.foundation.BorderStroke(1.dp, BorderLight)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Product Image
-            if (!item.productImage.isNullOrEmpty()) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(item.productImage)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = item.productName,
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(BackgroundLight),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .background(BackgroundLight, RoundedCornerShape(8.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ShoppingBag,
-                        contentDescription = null,
-                        tint = TextHint,
-                        modifier = Modifier.size(24.dp)
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Product Image
+                if (!item.productImage.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(item.productImage)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = item.productName,
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(BackgroundLight),
+                        contentScale = ContentScale.Crop
                     )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .background(BackgroundLight, RoundedCornerShape(8.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ShoppingBag,
+                            contentDescription = null,
+                            tint = TextHint,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = item.productName,
+                        style = Typography.titleSmall,
+                        color = TextPrimary,
+                        maxLines = 2
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "${formatPrice(item.price)}đ × ${item.quantity}",
+                            style = Typography.bodySmall,
+                            color = TextSecondary
+                        )
+                        Text(
+                            text = "${formatPrice(item.subtotal)}đ",
+                            fontFamily = Poppins,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = PrimaryBlue
+                        )
+                    }
                 }
             }
 
+            // Review button for delivered orders
+            if (showReviewButton) {
+                HorizontalDivider(color = BorderLight)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    OutlinedButton(
+                        onClick = onReviewClick,
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = AccentGold
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AccentGold),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Đánh giá",
+                            fontFamily = Poppins,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewPromptSection(
+    items: List<OrderItemDto>,
+    onReviewClick: (Int) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = AccentGoldSoft),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.RateReview,
+                contentDescription = null,
+                tint = AccentGold,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = item.productName,
-                    style = Typography.titleSmall,
-                    color = TextPrimary,
-                    maxLines = 2
+                    text = "Đánh giá sản phẩm",
+                    fontFamily = Poppins,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = TextPrimary
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "${formatPrice(item.price)}đ × ${item.quantity}",
-                        style = Typography.bodySmall,
-                        color = TextSecondary
-                    )
-                    Text(
-                        text = "${formatPrice(item.subtotal)}đ",
-                        fontFamily = Poppins,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 13.sp,
-                        color = PrimaryBlue
-                    )
-                }
+                Text(
+                    text = "Đơn hàng đã giao. Hãy chia sẻ trải nghiệm của bạn!",
+                    style = Typography.bodySmall,
+                    color = TextSecondary
+                )
             }
         }
     }

@@ -58,15 +58,7 @@ fun AdminOrderListScreen(
                         )
                     }
                 },
-                actions = {
-                    IconButton(onClick = { viewModel.fetchOrders() }) {
-                        Icon(
-                            Icons.Filled.Refresh,
-                            contentDescription = "Refresh",
-                            tint = PrimaryBlue
-                        )
-                    }
-                },
+                actions = {},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = BackgroundWhite
                 )

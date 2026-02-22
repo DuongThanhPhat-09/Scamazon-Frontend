@@ -10,8 +10,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+import com.example.scamazon_frontend.core.network.AppEvent
+import com.example.scamazon_frontend.core.network.SignalRManager
+
 class AdminDashboardViewModel(
-    private val repository: AdminRepository
+    private val repository: AdminRepository,
+    private val signalRManager: SignalRManager
 ) : ViewModel() {
 
     private val _statsState = MutableStateFlow<Resource<DashboardStatsDto>>(Resource.Loading())
@@ -22,6 +26,15 @@ class AdminDashboardViewModel(
 
     init {
         loadStats()
+
+        viewModelScope.launch {
+            signalRManager.events.collect { event ->
+                // Both new orders and new products should update dashboard stats
+                if (event == AppEvent.OrderUpdated || event == AppEvent.ProductUpdated) {
+                    loadStats()
+                }
+            }
+        }
     }
 
     fun loadStats() {
@@ -31,11 +44,5 @@ class AdminDashboardViewModel(
         }
     }
 
-    fun refresh() {
-        viewModelScope.launch {
-            _isRefreshing.value = true
-            _statsState.value = repository.getDashboardStats()
-            _isRefreshing.value = false
-        }
-    }
+
 }

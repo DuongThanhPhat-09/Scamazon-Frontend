@@ -9,8 +9,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.example.scamazon_frontend.core.network.AppEvent
+import com.example.scamazon_frontend.core.network.SignalRManager
 
-class ProductListViewModel(private val repository: HomeRepository) : ViewModel() {
+class ProductListViewModel(
+    private val repository: HomeRepository,
+    private val signalRManager: SignalRManager
+) : ViewModel() {
 
     private val _productsState = MutableStateFlow<Resource<List<ProductDto>>>(Resource.Loading())
     val productsState: StateFlow<Resource<List<ProductDto>>> = _productsState.asStateFlow()
@@ -28,6 +33,16 @@ class ProductListViewModel(private val repository: HomeRepository) : ViewModel()
 
     // Raw data from API (unsorted)
     private val allProducts = mutableListOf<ProductDto>()
+
+    init {
+        viewModelScope.launch {
+            signalRManager.events.collect { event ->
+                if (event == AppEvent.ProductUpdated) {
+                    refresh()
+                }
+            }
+        }
+    }
 
     fun init(categoryId: Int?) {
         this.categoryId = categoryId

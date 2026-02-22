@@ -11,7 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class AdminOrderViewModel(private val repository: AdminRepository) : ViewModel() {
+import com.example.scamazon_frontend.core.network.AppEvent
+import com.example.scamazon_frontend.core.network.SignalRManager
+
+class AdminOrderViewModel(
+    private val repository: AdminRepository,
+    private val signalRManager: SignalRManager
+) : ViewModel() {
 
     private val _ordersState = MutableStateFlow<Resource<List<AdminOrderSummaryDto>>>(Resource.Loading())
     val ordersState: StateFlow<Resource<List<AdminOrderSummaryDto>>> = _ordersState.asStateFlow()
@@ -27,6 +33,14 @@ class AdminOrderViewModel(private val repository: AdminRepository) : ViewModel()
 
     init {
         fetchOrders()
+
+        viewModelScope.launch {
+            signalRManager.events.collect { event ->
+                if (event == AppEvent.OrderUpdated) {
+                    fetchOrders()
+                }
+            }
+        }
     }
 
     fun fetchOrders() {

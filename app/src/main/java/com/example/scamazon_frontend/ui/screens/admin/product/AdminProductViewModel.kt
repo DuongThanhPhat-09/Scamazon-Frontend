@@ -20,9 +20,13 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 
+import com.example.scamazon_frontend.core.network.AppEvent
+import com.example.scamazon_frontend.core.network.SignalRManager
+
 class AdminProductViewModel(
     private val repository: AdminRepository,
-    private val productService: ProductService
+    private val productService: ProductService,
+    private val signalRManager: SignalRManager
 ) : ViewModel() {
 
     private val _productsState = MutableStateFlow<Resource<ProductPaginationResponse>>(Resource.Loading())
@@ -52,6 +56,14 @@ class AdminProductViewModel(
         loadProducts()
         loadCategories()
         loadBrands()
+
+        viewModelScope.launch {
+            signalRManager.events.collect { event ->
+                if (event == AppEvent.ProductUpdated) {
+                    loadProducts(currentPage)
+                }
+            }
+        }
     }
 
     fun loadProducts(page: Int = 1, search: String? = null) {

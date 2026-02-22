@@ -24,10 +24,12 @@ import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.category.CategoryDto
 import com.example.scamazon_frontend.data.models.product.ProductDto
 import com.example.scamazon_frontend.di.ViewModelFactory
+import com.example.scamazon_frontend.ui.screens.favorite.FavoriteViewModel
 
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
+    favoriteViewModel: FavoriteViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateToProductDetail: (String) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
@@ -39,6 +41,7 @@ fun HomeScreen(
     val flashSaleState by viewModel.flashSaleState.collectAsStateWithLifecycle()
     val megaSaleState by viewModel.megaSaleState.collectAsStateWithLifecycle()
     val recommendedState by viewModel.recommendedState.collectAsStateWithLifecycle()
+    val favoriteIds by favoriteViewModel.favoriteIds.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -97,7 +100,12 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 when (flashSaleState) {
                     is Resource.Loading -> CircularProgressIndicator(modifier = Modifier.padding(Dimens.ScreenPadding))
-                    is Resource.Success -> ProductsRow(flashSaleState.data?.items ?: emptyList(), onProductClick = onNavigateToProductDetail)
+                    is Resource.Success -> ProductsRow(
+                        products = flashSaleState.data?.items ?: emptyList(),
+                        onProductClick = onNavigateToProductDetail,
+                        favoriteIds = favoriteIds,
+                        onToggleFavorite = { favoriteViewModel.toggleFavorite(it) }
+                    )
                     is Resource.Error -> Text("Error", modifier = Modifier.padding(Dimens.ScreenPadding))
                 }
             }
@@ -112,7 +120,12 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 when (megaSaleState) {
                     is Resource.Loading -> CircularProgressIndicator(modifier = Modifier.padding(Dimens.ScreenPadding))
-                    is Resource.Success -> ProductsRow(megaSaleState.data?.items ?: emptyList(), onProductClick = onNavigateToProductDetail)
+                    is Resource.Success -> ProductsRow(
+                        products = megaSaleState.data?.items ?: emptyList(),
+                        onProductClick = onNavigateToProductDetail,
+                        favoriteIds = favoriteIds,
+                        onToggleFavorite = { favoriteViewModel.toggleFavorite(it) }
+                    )
                     is Resource.Error -> Text("Error", modifier = Modifier.padding(Dimens.ScreenPadding))
                 }
             }
@@ -134,7 +147,12 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 when (recommendedState) {
                     is Resource.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                    is Resource.Success -> ProductsGrid(recommendedState.data?.items ?: emptyList(), onProductClick = onNavigateToProductDetail)
+                    is Resource.Success -> ProductsGrid(
+                        products = recommendedState.data?.items ?: emptyList(),
+                        onProductClick = onNavigateToProductDetail,
+                        favoriteIds = favoriteIds,
+                        onToggleFavorite = { favoriteViewModel.toggleFavorite(it) }
+                    )
                     is Resource.Error -> Text("Error loading products", modifier = Modifier.padding(Dimens.ScreenPadding))
                 }
             }
@@ -175,7 +193,7 @@ private fun CategoriesRow(categories: List<CategoryDto>) {
         items(categories) { category ->
             CategoryCard(
                 name = category.name,
-                icon = Icons.Default.Category, // Fallback icon since we use image_url normally
+                icon = Icons.Default.Category,
                 onClick = { /* Navigate to category */ }
             )
         }
@@ -183,7 +201,12 @@ private fun CategoriesRow(categories: List<CategoryDto>) {
 }
 
 @Composable
-private fun ProductsRow(products: List<ProductDto>, onProductClick: (String) -> Unit) {
+private fun ProductsRow(
+    products: List<ProductDto>,
+    onProductClick: (String) -> Unit,
+    favoriteIds: Set<Int> = emptySet(),
+    onToggleFavorite: (Int) -> Unit = {}
+) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -193,9 +216,11 @@ private fun ProductsRow(products: List<ProductDto>, onProductClick: (String) -> 
                 productName = product.name,
                 productImage = product.primaryImage ?: "",
                 price = product.price,
-                originalPrice = product.salePrice, // using sale_price as original for demo if needed, usually it's inverse
-                discount = null, // calculate discount if needed
+                originalPrice = product.salePrice,
+                discount = null,
                 rating = product.avgRating ?: 0f,
+                isFavorite = favoriteIds.contains(product.id),
+                onFavoriteClick = { onToggleFavorite(product.id) },
                 onClick = { onProductClick(product.slug) }
             )
         }
@@ -203,7 +228,12 @@ private fun ProductsRow(products: List<ProductDto>, onProductClick: (String) -> 
 }
 
 @Composable
-private fun ProductsGrid(products: List<ProductDto>, onProductClick: (String) -> Unit) {
+private fun ProductsGrid(
+    products: List<ProductDto>,
+    onProductClick: (String) -> Unit,
+    favoriteIds: Set<Int> = emptySet(),
+    onToggleFavorite: (Int) -> Unit = {}
+) {
     Column(
         modifier = Modifier.padding(horizontal = Dimens.ScreenPadding)
     ) {
@@ -220,11 +250,12 @@ private fun ProductsGrid(products: List<ProductDto>, onProductClick: (String) ->
                         originalPrice = product.salePrice,
                         discount = null,
                         rating = product.avgRating ?: 0f,
+                        isFavorite = favoriteIds.contains(product.id),
+                        onFavoriteClick = { onToggleFavorite(product.id) },
                         onClick = { onProductClick(product.slug) },
                         modifier = Modifier.weight(1f)
                     )
                 }
-                // Fill empty space if odd number of products
                 if (rowProducts.size == 1) {
                     Spacer(modifier = Modifier.weight(1f))
                 }
@@ -233,8 +264,6 @@ private fun ProductsGrid(products: List<ProductDto>, onProductClick: (String) ->
         }
     }
 }
-
-
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

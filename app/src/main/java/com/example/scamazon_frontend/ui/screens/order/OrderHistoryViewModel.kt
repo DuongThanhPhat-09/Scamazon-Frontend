@@ -11,7 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class OrderHistoryViewModel(private val repository: OrderRepository) : ViewModel() {
+import com.example.scamazon_frontend.core.network.AppEvent
+import com.example.scamazon_frontend.core.network.SignalRManager
+
+class OrderHistoryViewModel(
+    private val repository: OrderRepository,
+    private val signalRManager: SignalRManager
+) : ViewModel() {
 
     private val _ordersState = MutableStateFlow<Resource<List<OrderSummaryDto>>>(Resource.Loading())
     val ordersState: StateFlow<Resource<List<OrderSummaryDto>>> = _ordersState.asStateFlow()
@@ -21,6 +27,14 @@ class OrderHistoryViewModel(private val repository: OrderRepository) : ViewModel
 
     init {
         fetchOrders()
+
+        viewModelScope.launch {
+            signalRManager.events.collect { event ->
+                if (event == AppEvent.OrderUpdated) {
+                    fetchOrders()
+                }
+            }
+        }
     }
 
     fun fetchOrders() {

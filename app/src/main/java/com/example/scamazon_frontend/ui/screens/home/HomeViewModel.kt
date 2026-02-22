@@ -11,7 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class HomeViewModel(private val repository: HomeRepository) : ViewModel() {
+import com.example.scamazon_frontend.core.network.AppEvent
+import com.example.scamazon_frontend.core.network.SignalRManager
+
+class HomeViewModel(
+    private val repository: HomeRepository,
+    private val signalRManager: SignalRManager
+) : ViewModel() {
 
     private val _categoriesState = MutableStateFlow<Resource<List<CategoryDto>>>(Resource.Loading())
     val categoriesState: StateFlow<Resource<List<CategoryDto>>> = _categoriesState.asStateFlow()
@@ -27,6 +33,14 @@ class HomeViewModel(private val repository: HomeRepository) : ViewModel() {
 
     init {
         fetchHomeData()
+
+        viewModelScope.launch {
+            signalRManager.events.collect { event ->
+                if (event == AppEvent.ProductUpdated) {
+                    fetchHomeData()
+                }
+            }
+        }
     }
 
     fun fetchHomeData() {
