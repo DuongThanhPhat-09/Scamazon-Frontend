@@ -16,6 +16,7 @@ import com.example.scamazon_frontend.ui.components.LafyuuBottomNavBar
 /**
  * Main Screen with Bottom Navigation
  * Wraps the NavGraph with bottom navigation bar
+ * Supports both Customer and Admin role-based navigation
  */
 @Composable
 fun MainScreen(
@@ -25,8 +26,8 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Screens that should show bottom navigation
-    val bottomNavScreens = listOf(
+    // Customer screens that should show bottom navigation
+    val customerBottomNavScreens = listOf(
         Screen.Home.route,
         Screen.Explore.route,
         Screen.Cart.route,
@@ -34,30 +35,51 @@ fun MainScreen(
         Screen.Account.route
     )
 
-    // Check if current screen should show bottom nav
-    val showBottomNav = currentRoute in bottomNavScreens
+    // Admin screens that should show bottom navigation
+    val adminBottomNavScreens = listOf(
+        Screen.AdminDashboard.route,
+        Screen.AdminProducts.route,
+        Screen.AdminCategories.route,
+        Screen.AdminAccount.route
+    )
+
+    val showCustomerBottomNav = currentRoute in customerBottomNavScreens
+    val showAdminBottomNav = currentRoute in adminBottomNavScreens
 
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
         bottomBar = {
-            if (showBottomNav) {
-                LafyuuBottomNavBar(
-                    currentRoute = currentRoute ?: Screen.Home.route,
-                    onItemClick = { item ->
-                        navController.navigate(item.route) {
-                            // Pop up to the start destination of the graph to
-                            // avoid building up a large stack of destinations
-                            popUpTo(Screen.Home.route) {
-                                saveState = true
+            when {
+                showAdminBottomNav -> {
+                    LafyuuBottomNavBar(
+                        items = adminBottomNavItems,
+                        currentRoute = currentRoute ?: Screen.AdminDashboard.route,
+                        onItemClick = { item ->
+                            navController.navigate(item.route) {
+                                popUpTo(Screen.AdminDashboard.route) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            // Avoid multiple copies of the same destination
-                            launchSingleTop = true
-                            // Restore state when reselecting a previously selected item
-                            restoreState = true
                         }
-                    },
-                    cartBadgeCount = cartItemCount
-                )
+                    )
+                }
+                showCustomerBottomNav -> {
+                    LafyuuBottomNavBar(
+                        currentRoute = currentRoute ?: Screen.Home.route,
+                        onItemClick = { item ->
+                            navController.navigate(item.route) {
+                                popUpTo(Screen.Home.route) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        cartBadgeCount = cartItemCount
+                    )
+                }
             }
         }
     ) { innerPadding ->

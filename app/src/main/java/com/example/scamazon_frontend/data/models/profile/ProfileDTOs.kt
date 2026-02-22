@@ -16,3 +16,15 @@ data class ProfileDataDto(
     @SerializedName("ward") val ward: String?,
     @SerializedName("createdAt") val createdAt: String?
 )
+
+data class UpdateProfileRequest(
+    @SerializedName("email") val email: String? = null,
+    @SerializedName("phone") val phone: String? = null,
+    @SerializedName("fullName") val fullName: String? = null,
+    @SerializedName("avatarUrl") val avatarUrl: String? = null,
+    @SerializedName("address") val address: String? = null,
+    @SerializedName("city") val city: String? = null,
+    @SerializedName("district") val district: String? = null,
+    @SerializedName("ward") val ward: String? = null
+)
+

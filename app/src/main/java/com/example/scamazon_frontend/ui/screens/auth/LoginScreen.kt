@@ -29,6 +29,7 @@ fun LoginScreen(
     viewModel: AuthViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateToRegister: () -> Unit = {},
     onNavigateToHome: () -> Unit = {},
+    onNavigateToAdminDashboard: () -> Unit = {},
     onNavigateToForgotPassword: () -> Unit = {}
 ) {
     var email by remember { mutableStateOf("") }
@@ -42,8 +43,13 @@ fun LoginScreen(
     LaunchedEffect(loginState) {
         when (loginState) {
             is Resource.Success -> {
+                val role = (loginState as? Resource.Success)?.data?.user?.role
                 viewModel.resetState()
-                onNavigateToHome()
+                if (role == "admin") {
+                    onNavigateToAdminDashboard()
+                } else {
+                    onNavigateToHome()
+                }
             }
             is Resource.Error -> {
                 emailError = loginState?.message

@@ -25,6 +25,8 @@ class ProductListViewModel(private val repository: HomeRepository) : ViewModel()
     val totalPages: StateFlow<Int> = _totalPages.asStateFlow()
 
     private var categoryId: Int? = null
+
+    // Raw data from API (unsorted)
     private val allProducts = mutableListOf<ProductDto>()
 
     fun init(categoryId: Int?) {
@@ -35,7 +37,8 @@ class ProductListViewModel(private val repository: HomeRepository) : ViewModel()
     fun setSort(sort: String) {
         if (_currentSort.value != sort) {
             _currentSort.value = sort
-            fetchProducts(reset = true)
+            // Client-side sort: just re-sort the already-loaded data
+            applySortAndEmit()
         }
     }
 
@@ -60,9 +63,8 @@ class ProductListViewModel(private val repository: HomeRepository) : ViewModel()
 
             val result = repository.getProducts(
                 page = _currentPage.value,
-                limit = 10,
-                categoryId = categoryId,
-                sort = _currentSort.value
+                limit = 20,
+                categoryId = categoryId
             )
 
             when (result) {
@@ -71,7 +73,7 @@ class ProductListViewModel(private val repository: HomeRepository) : ViewModel()
                     if (data != null) {
                         _totalPages.value = data.pagination.totalPages
                         allProducts.addAll(data.items)
-                        _productsState.value = Resource.Success(allProducts.toList())
+                        applySortAndEmit()
                     } else {
                         _productsState.value = Resource.Success(emptyList())
                     }
@@ -82,5 +84,15 @@ class ProductListViewModel(private val repository: HomeRepository) : ViewModel()
                 is Resource.Loading -> {}
             }
         }
+    }
+
+    private fun applySortAndEmit() {
+        val sorted = when (_currentSort.value) {
+            "price" -> allProducts.sortedBy { it.salePrice ?: it.price }
+            "name" -> allProducts.sortedBy { it.name.lowercase() }
+            "rating" -> allProducts.sortedByDescending { it.avgRating ?: 0f }
+            else -> allProducts.sortedByDescending { it.id } // "newest"
+        }
+        _productsState.value = Resource.Success(sorted)
     }
 }

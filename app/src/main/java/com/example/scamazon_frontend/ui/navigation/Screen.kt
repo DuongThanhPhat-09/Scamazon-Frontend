@@ -70,6 +70,26 @@ sealed class Screen(val route: String) {
     object Review : Screen("review/{productId}") {
         fun createRoute(productId: String) = "review/$productId"
     }
+
+    // ==========================================
+    // ADMIN SCREENS
+    // ==========================================
+    object AdminDashboard : Screen("admin_dashboard")
+    object AdminProducts : Screen("admin_products")
+    object AdminProductAdd : Screen("admin_product_add")
+    object AdminProductEdit : Screen("admin_product_edit/{productId}") {
+        fun createRoute(productId: Int) = "admin_product_edit/$productId"
+    }
+    object AdminCategories : Screen("admin_categories")
+    object AdminCategoryAdd : Screen("admin_category_add")
+    object AdminCategoryEdit : Screen("admin_category_edit/{categoryId}") {
+        fun createRoute(categoryId: Int) = "admin_category_edit/$categoryId"
+    }
+    object AdminBrandAdd : Screen("admin_brand_add")
+    object AdminBrandEdit : Screen("admin_brand_edit/{brandId}") {
+        fun createRoute(brandId: Int) = "admin_brand_edit/$brandId"
+    }
+    object AdminAccount : Screen("admin_account")
 }
 
 /**

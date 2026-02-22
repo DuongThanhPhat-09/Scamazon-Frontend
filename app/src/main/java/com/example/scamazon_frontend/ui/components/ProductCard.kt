@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.scamazon_frontend.core.utils.formatPrice
 import com.example.scamazon_frontend.ui.theme.*
 
 /**
@@ -151,7 +152,7 @@ fun ProductCard(
 
                 // Price
                 Text(
-                    text = "$${String.format("%.2f", price)}",
+                    text = "${formatPrice(price)}đ",
                     fontFamily = Poppins,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
@@ -165,7 +166,7 @@ fun ProductCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "$${String.format("%.2f", it)}",
+                            text = "${formatPrice(it)}đ",
                             fontFamily = Poppins,
                             fontWeight = FontWeight.Normal,
                             fontSize = 10.sp,
@@ -291,7 +292,7 @@ fun ProductCardHorizontal(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "$${String.format("%.2f", price)}",
+                        text = "${formatPrice(price)}đ",
                         fontFamily = Poppins,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,

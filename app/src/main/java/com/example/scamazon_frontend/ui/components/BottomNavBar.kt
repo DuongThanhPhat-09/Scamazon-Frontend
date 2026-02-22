@@ -17,7 +17,7 @@ import com.example.scamazon_frontend.ui.theme.*
 /**
  * Bottom Navigation Items
  */
-sealed class BottomNavItem(
+open class BottomNavItem(
     val route: String,
     val title: String,
     val selectedIcon: ImageVector,

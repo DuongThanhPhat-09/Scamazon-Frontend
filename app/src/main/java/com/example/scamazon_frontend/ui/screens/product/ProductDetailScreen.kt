@@ -28,6 +28,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.core.utils.formatPrice
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
@@ -169,7 +170,7 @@ fun ProductDetailScreen(
                             ) {
                                 val displayPrice = product.salePrice ?: product.price
                                 Text(
-                                    text = "$${String.format("%.2f", displayPrice)}",
+                                    text = "${formatPrice(displayPrice)}đ",
                                     fontFamily = Poppins,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 20.sp,
@@ -178,7 +179,7 @@ fun ProductDetailScreen(
 
                                 if (product.salePrice != null) {
                                     Text(
-                                        text = "$${String.format("%.2f", product.price)}",
+                                        text = "${formatPrice(product.price)}đ",
                                         fontFamily = Poppins,
                                         fontWeight = FontWeight.Normal,
                                         fontSize = 14.sp,

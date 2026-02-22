@@ -14,7 +14,14 @@ interface ProductService {
         @Query("page") page: Int? = null,
         @Query("limit") limit: Int? = null,
         @Query("category_id") categoryId: Int? = null,
-        @Query("sort") sort: String? = null
+        @Query("brand_id") brandId: Int? = null,
+        @Query("search") search: String? = null,
+        @Query("min_price") minPrice: Double? = null,
+        @Query("max_price") maxPrice: Double? = null,
+        @Query("min_rating") minRating: Int? = null,
+        @Query("sort_by") sortBy: String? = null,
+        @Query("sort_order") sortOrder: String? = null,
+        @Query("is_featured") isFeatured: Boolean? = null
     ): Response<ApiResponse<ProductPaginationResponse>>
 
     @GET("/api/products/{slug}")

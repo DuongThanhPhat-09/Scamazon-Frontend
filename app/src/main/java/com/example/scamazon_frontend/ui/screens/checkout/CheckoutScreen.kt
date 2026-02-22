@@ -1,451 +1,198 @@
 package com.example.scamazon_frontend.ui.screens.checkout
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.RadioButtonChecked
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.scamazon_frontend.ui.components.LafyuuPrimaryButton
-import com.example.scamazon_frontend.ui.components.LafyuuTopAppBar
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.di.ViewModelFactory
+import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
 
 @Composable
 fun CheckoutScreen(
+    viewModel: CheckoutViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {},
-    onOrderSuccess: () -> Unit = {}
+    onOrderSuccess: (String) -> Unit = {}
 ) {
-    var selectedShipping by remember { mutableStateOf(0) }
-    var selectedPayment by remember { mutableStateOf(0) }
-    var showOrderConfirmDialog by remember { mutableStateOf(false) }
+    val shippingName by viewModel.shippingName.collectAsStateWithLifecycle()
+    val shippingPhone by viewModel.shippingPhone.collectAsStateWithLifecycle()
+    val shippingAddress by viewModel.shippingAddress.collectAsStateWithLifecycle()
+    val shippingCity by viewModel.shippingCity.collectAsStateWithLifecycle()
+    val shippingDistrict by viewModel.shippingDistrict.collectAsStateWithLifecycle()
+    val shippingWard by viewModel.shippingWard.collectAsStateWithLifecycle()
+    val paymentMethod by viewModel.paymentMethod.collectAsStateWithLifecycle()
+    val note by viewModel.note.collectAsStateWithLifecycle()
+    val orderState by viewModel.orderState.collectAsStateWithLifecycle()
 
-    val shippingOptions = listOf(
-        ShippingOption("Economy", "Estimated 5-7 days", 5.00),
-        ShippingOption("Regular", "Estimated 3-5 days", 7.50),
-        ShippingOption("Cargo", "Estimated 1-2 days", 15.00)
-    )
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    val paymentMethods = listOf(
-        PaymentMethod("Credit Card", "Visa ending in 4242", Icons.Default.CreditCard),
-        PaymentMethod("Debit Card", "Mastercard ending in 5353", Icons.Default.CreditCard),
-        PaymentMethod("Cash on Delivery", "Pay when you receive", Icons.Default.LocalShipping)
-    )
-
-    val subtotal = 749.41
-    val shippingCost = shippingOptions[selectedShipping].price
-    val total = subtotal + shippingCost
-
-    if (showOrderConfirmDialog) {
-        OrderConfirmDialog(
-            total = total,
-            onConfirm = {
-                showOrderConfirmDialog = false
-                onOrderSuccess()
-            },
-            onDismiss = { showOrderConfirmDialog = false }
-        )
+    // Handle order result
+    LaunchedEffect(orderState) {
+        when (orderState) {
+            is Resource.Success -> {
+                val orderId = orderState?.data?.orderId?.toString() ?: ""
+                viewModel.resetOrderState()
+                onOrderSuccess(orderId)
+            }
+            is Resource.Error -> {
+                snackbarHostState.showSnackbar(orderState?.message ?: "Order failed")
+                viewModel.resetOrderState()
+            }
+            else -> {}
+        }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundWhite)
-    ) {
-        LafyuuTopAppBar(
-            title = "Checkout",
-            onBackClick = onNavigateBack
-        )
-
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
         Column(
             modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(BackgroundWhite)
         ) {
-            // Shipping Address Section
-            CheckoutSection(title = "Shipping Address") {
-                AddressCard(
-                    name = "John Doe",
-                    address = "3 Newbridge Court, Chino Hills, CA 91709",
-                    phone = "+1 (555) 234-5678"
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = {},
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = LafyuuShapes.ButtonShape,
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryBlue),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryBlue)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Add New Address",
-                        fontFamily = Poppins,
-                        fontSize = 13.sp
-                    )
-                }
-            }
+            LafyuuTopAppBar(title = "Checkout", onBackClick = onNavigateBack)
 
-            // Shipping Method Section
-            CheckoutSection(title = "Shipping Method") {
-                shippingOptions.forEachIndexed { index, option ->
-                    ShippingOptionItem(
-                        option = option,
-                        isSelected = selectedShipping == index,
-                        onClick = { selectedShipping = index }
-                    )
-                    if (index < shippingOptions.lastIndex) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-            }
-
-            // Payment Method Section
-            CheckoutSection(title = "Payment Method") {
-                paymentMethods.forEachIndexed { index, method ->
-                    PaymentMethodItem(
-                        method = method,
-                        isSelected = selectedPayment == index,
-                        onClick = { selectedPayment = index }
-                    )
-                    if (index < paymentMethods.lastIndex) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-            }
-
-            // Order Summary Section
-            CheckoutSection(title = "Order Summary") {
-                OrderSummaryRow(label = "Items (3)", value = "$${"%.2f".format(subtotal)}")
-                Spacer(modifier = Modifier.height(8.dp))
-                OrderSummaryRow(label = "Shipping (${shippingOptions[selectedShipping].name})", value = "$${"%.2f".format(shippingCost)}")
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = BorderLight)
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Total",
-                        fontFamily = Poppins,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = "$${"%.2f".format(total)}",
-                        fontFamily = Poppins,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = PrimaryBlue
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        // Place Order Button
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shadowElevation = 8.dp,
-            color = White
-        ) {
-            Box(modifier = Modifier.padding(16.dp)) {
-                LafyuuPrimaryButton(
-                    text = "Place Order • $${"%.2f".format(total)}",
-                    onClick = { showOrderConfirmDialog = true }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CheckoutSection(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            text = title,
-            fontFamily = Poppins,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp,
-            color = TextPrimary
-        )
-        content()
-    }
-}
-
-@Composable
-private fun AddressCard(
-    name: String,
-    address: String,
-    phone: String
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = LafyuuShapes.CardShape,
-        colors = CardDefaults.cardColors(containerColor = BackgroundLight),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderLight)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.LocationOn,
-                contentDescription = null,
-                tint = PrimaryBlue,
+            Column(
                 modifier = Modifier
-                    .size(20.dp)
-                    .padding(top = 2.dp)
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(Dimens.ScreenPadding),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Shipping Information Section
                 Text(
-                    text = name,
-                    fontFamily = Poppins,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp,
+                    text = "Shipping Information",
+                    style = Typography.titleLarge,
                     color = TextPrimary
                 )
-                Text(
-                    text = address,
-                    fontFamily = Poppins,
-                    fontSize = 12.sp,
-                    color = TextSecondary
+
+                LafyuuTextField(
+                    value = shippingName,
+                    onValueChange = { viewModel.onShippingNameChange(it) },
+                    placeholder = "Full Name *",
+                    leadingIcon = Icons.Default.Person
                 )
-                Text(
-                    text = phone,
-                    fontFamily = Poppins,
-                    fontSize = 12.sp,
-                    color = TextSecondary
+
+                LafyuuTextField(
+                    value = shippingPhone,
+                    onValueChange = { viewModel.onShippingPhoneChange(it) },
+                    placeholder = "Phone Number *",
+                    leadingIcon = Icons.Default.Phone,
+                    keyboardType = KeyboardType.Phone
                 )
+
+                LafyuuTextField(
+                    value = shippingAddress,
+                    onValueChange = { viewModel.onShippingAddressChange(it) },
+                    placeholder = "Shipping Address *",
+                    leadingIcon = Icons.Default.LocationOn
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    LafyuuTextField(
+                        value = shippingCity,
+                        onValueChange = { viewModel.onShippingCityChange(it) },
+                        placeholder = "City",
+                        modifier = Modifier.weight(1f)
+                    )
+                    LafyuuTextField(
+                        value = shippingDistrict,
+                        onValueChange = { viewModel.onShippingDistrictChange(it) },
+                        placeholder = "District",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                LafyuuTextField(
+                    value = shippingWard,
+                    onValueChange = { viewModel.onShippingWardChange(it) },
+                    placeholder = "Ward"
+                )
+
+                HorizontalDivider(color = BorderLight)
+
+                // Payment Method Section
+                Text(
+                    text = "Payment Method",
+                    style = Typography.titleLarge,
+                    color = TextPrimary
+                )
+
+                val paymentOptions = listOf(
+                    "cod" to "Cash on Delivery (COD)",
+                    "vnpay" to "VNPay"
+                )
+
+                paymentOptions.forEach { (value, label) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.onPaymentMethodChange(value) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = paymentMethod == value,
+                            onClick = { viewModel.onPaymentMethodChange(value) },
+                            colors = RadioButtonDefaults.colors(selectedColor = PrimaryBlue)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = label, style = Typography.bodyLarge, color = TextPrimary)
+                    }
+                }
+
+                HorizontalDivider(color = BorderLight)
+
+                // Note
+                Text(
+                    text = "Order Note (optional)",
+                    style = Typography.titleMedium,
+                    color = TextPrimary
+                )
+
+                LafyuuTextField(
+                    value = note,
+                    onValueChange = { viewModel.onNoteChange(it) },
+                    placeholder = "Any special instructions...",
+                    singleLine = false,
+                    imeAction = ImeAction.Done
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
-        }
-    }
-}
 
-@Composable
-private fun ShippingOptionItem(
-    option: ShippingOption,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val borderColor = if (isSelected) PrimaryBlue else BorderDefault
-    val bgColor = if (isSelected) PrimaryBlueSoft else White
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .border(1.dp, borderColor, LafyuuShapes.CardShape)
-            .background(bgColor, LafyuuShapes.CardShape)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Icon(
-            imageVector = if (isSelected) Icons.Default.RadioButtonChecked else Icons.Default.RadioButtonUnchecked,
-            contentDescription = null,
-            tint = if (isSelected) PrimaryBlue else TextSecondary,
-            modifier = Modifier.size(20.dp)
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = option.name,
-                fontFamily = Poppins,
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp,
-                color = TextPrimary
-            )
-            Text(
-                text = option.duration,
-                fontFamily = Poppins,
-                fontSize = 12.sp,
-                color = TextSecondary
-            )
-        }
-        Text(
-            text = "$${"%.2f".format(option.price)}",
-            fontFamily = Poppins,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 14.sp,
-            color = PrimaryBlue
-        )
-    }
-}
-
-@Composable
-private fun PaymentMethodItem(
-    method: PaymentMethod,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val borderColor = if (isSelected) PrimaryBlue else BorderDefault
-    val bgColor = if (isSelected) PrimaryBlueSoft else White
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .border(1.dp, borderColor, LafyuuShapes.CardShape)
-            .background(bgColor, LafyuuShapes.CardShape)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .background(PrimaryBlueSoft, RoundedCornerShape(8.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = method.icon,
-                contentDescription = null,
-                tint = PrimaryBlue,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = method.name,
-                fontFamily = Poppins,
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp,
-                color = TextPrimary
-            )
-            Text(
-                text = method.detail,
-                fontFamily = Poppins,
-                fontSize = 12.sp,
-                color = TextSecondary
-            )
-        }
-        Icon(
-            imageVector = if (isSelected) Icons.Default.RadioButtonChecked else Icons.Default.RadioButtonUnchecked,
-            contentDescription = null,
-            tint = if (isSelected) PrimaryBlue else TextSecondary,
-            modifier = Modifier.size(20.dp)
-        )
-    }
-}
-
-@Composable
-private fun OrderSummaryRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            fontFamily = Poppins,
-            fontSize = 14.sp,
-            color = TextSecondary
-        )
-        Text(
-            text = value,
-            fontFamily = Poppins,
-            fontWeight = FontWeight.Medium,
-            fontSize = 14.sp,
-            color = TextPrimary
-        )
-    }
-}
-
-@Composable
-private fun OrderConfirmDialog(
-    total: Double,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-                contentDescription = null,
-                tint = StatusSuccess,
-                modifier = Modifier.size(48.dp)
-            )
-        },
-        title = {
-            Text(
-                text = "Confirm Order",
-                fontFamily = Poppins,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
-        },
-        text = {
-            Text(
-                text = "Place order for $${"%.2f".format(total)}?",
-                fontFamily = Poppins,
-                color = TextSecondary,
-                fontSize = 14.sp
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                shape = LafyuuShapes.ButtonShape
+            // Place Order Button
+            val isOrdering = orderState is Resource.Loading
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shadowElevation = 8.dp,
+                color = White
             ) {
-                Text("Place Order", fontFamily = Poppins)
+                LafyuuPrimaryButton(
+                    text = if (isOrdering) "Placing Order..." else "Place Order",
+                    onClick = { viewModel.placeOrder() },
+                    enabled = !isOrdering,
+                    modifier = Modifier.padding(Dimens.ScreenPadding)
+                )
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", fontFamily = Poppins, color = TextSecondary)
-            }
-        },
-        containerColor = White
-    )
-}
-
-private data class ShippingOption(
-    val name: String,
-    val duration: String,
-    val price: Double
-)
-
-private data class PaymentMethod(
-    val name: String,
-    val detail: String,
-    val icon: ImageVector
-)
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun CheckoutScreenPreview() {
-    ScamazonFrontendTheme {
-        CheckoutScreen()
+        }
     }
 }

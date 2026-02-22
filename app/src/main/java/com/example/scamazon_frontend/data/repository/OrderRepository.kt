@@ -2,47 +2,28 @@ package com.example.scamazon_frontend.data.repository
 
 import com.example.scamazon_frontend.core.network.ApiResponse
 import com.example.scamazon_frontend.core.utils.Resource
-import com.example.scamazon_frontend.data.models.cart.AddToCartRequest
-import com.example.scamazon_frontend.data.models.cart.CartDataDto
-import com.example.scamazon_frontend.data.models.cart.UpdateCartItemRequest
-import com.example.scamazon_frontend.data.remote.CartService
+import com.example.scamazon_frontend.data.models.order.CreateOrderDataDto
+import com.example.scamazon_frontend.data.models.order.CreateOrderRequest
+import com.example.scamazon_frontend.data.models.order.OrderDetailDataDto
+import com.example.scamazon_frontend.data.models.order.OrderSummaryDto
+import com.example.scamazon_frontend.data.remote.OrderService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import retrofit2.Response
 
-class CartRepository(private val cartService: CartService) {
+class OrderRepository(private val orderService: OrderService) {
 
-    suspend fun getCart(): Resource<CartDataDto> {
-        return safeApiCall { cartService.getCart() }
+    suspend fun createOrder(request: CreateOrderRequest): Resource<CreateOrderDataDto> {
+        return safeApiCall { orderService.createOrder(request) }
     }
 
-    suspend fun addToCart(request: AddToCartRequest): Resource<CartDataDto> {
-        return safeApiCall { cartService.addToCart(request) }
+    suspend fun getMyOrders(): Resource<List<OrderSummaryDto>> {
+        return safeApiCall { orderService.getMyOrders() }
     }
 
-    suspend fun updateCartItem(id: Int, request: UpdateCartItemRequest): Resource<CartDataDto> {
-        return safeApiCall { cartService.updateCartItem(id, request) }
-    }
-
-    suspend fun removeCartItem(id: Int): Resource<Any> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = cartService.removeCartItem(id)
-                if (response.isSuccessful) {
-                    val body = response.body()
-                    if (body != null && body.success) {
-                        Resource.Success(body.data ?: Unit)
-                    } else {
-                        Resource.Error(body?.message ?: "Unknown error")
-                    }
-                } else {
-                    Resource.Error("API Error: ${response.code()}")
-                }
-            } catch (e: Exception) {
-                Resource.Error(e.message ?: "Network error occurred")
-            }
-        }
+    suspend fun getOrderDetail(id: Int): Resource<OrderDetailDataDto> {
+        return safeApiCall { orderService.getOrderDetail(id) }
     }
 
     private suspend fun <T> safeApiCall(apiCall: suspend () -> Response<ApiResponse<T>>): Resource<T> {
