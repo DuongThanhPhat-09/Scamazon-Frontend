@@ -7,6 +7,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -207,7 +213,23 @@ fun NavGraph(
         // ==========================================
         // SEARCH & EXPLORE
         // ==========================================
-        composable(route = Screen.Explore.route) {
+        composable(
+            route = Screen.Explore.route,
+            enterTransition = {
+                fadeIn(tween(300)) + slideInVertically(
+                    initialOffsetY = { -it / 5 },
+                    animationSpec = tween(350, easing = FastOutSlowInEasing)
+                )
+            },
+            exitTransition = { fadeOut(tween(200)) },
+            popEnterTransition = { fadeIn(tween(300)) },
+            popExitTransition = {
+                fadeOut(tween(250)) + slideOutVertically(
+                    targetOffsetY = { -it / 5 },
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
+            }
+        ) {
             ExploreScreen(
                 onProductClick = { slug ->
                     navController.navigate(Screen.ProductDetail.createRoute(slug))
@@ -222,7 +244,23 @@ fun NavGraph(
             PlaceholderScreen(screenName = "Offers")
         }
 
-        composable(route = Screen.Search.route) {
+        composable(
+            route = Screen.Search.route,
+            enterTransition = {
+                fadeIn(tween(300)) + slideInVertically(
+                    initialOffsetY = { -it / 5 },
+                    animationSpec = tween(350, easing = FastOutSlowInEasing)
+                )
+            },
+            exitTransition = { fadeOut(tween(200)) },
+            popEnterTransition = { fadeIn(tween(300)) },
+            popExitTransition = {
+                fadeOut(tween(250)) + slideOutVertically(
+                    targetOffsetY = { -it / 5 },
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
+            }
+        ) {
             ExploreScreen(
                 onProductClick = { slug ->
                     navController.navigate(Screen.ProductDetail.createRoute(slug))

@@ -1,6 +1,7 @@
 package com.example.scamazon_frontend.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -9,15 +10,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.scamazon_frontend.ui.theme.*
 
 /**
- * Main App Bar - Lafyuu Style
- * With search bar
+ * Main App Bar - Two-row layout
+ * Row 1: Brand name + action icons
+ * Row 2: Full-width clickable search bar
  */
 @Composable
 fun LafyuuMainAppBar(
@@ -33,73 +38,140 @@ fun LafyuuMainAppBar(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = BackgroundWhite,
-        shadowElevation = 1.dp
+        color = PrimaryBlue,
+        shadowElevation = 4.dp
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        Column(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            // Search Field
-            LafyuuSearchField(
-                value = searchQuery,
-                onValueChange = onSearchQueryChange,
-                onSearch = onSearchClick,
-                modifier = Modifier.weight(1f)
-            )
-
-            // Favorite Icon
-            IconButton(onClick = onFavoriteClick) {
-                Icon(
-                    imageVector = Icons.Default.FavoriteBorder,
-                    contentDescription = "Favorites",
-                    tint = TextSecondary
+            // Row 1: Brand + Icons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 8.dp, top = 10.dp, bottom = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Brand Name
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(style = SpanStyle(
+                            fontWeight = FontWeight.Light,
+                            color = White
+                        )) {
+                            append("Scam")
+                        }
+                        withStyle(style = SpanStyle(
+                            fontWeight = FontWeight.Bold,
+                            color = AccentGoldLight
+                        )) {
+                            append("azon")
+                        }
+                    },
+                    fontFamily = Poppins,
+                    fontSize = 22.sp,
+                    letterSpacing = 1.sp
                 )
-            }
 
-            // Map Location Icon
-            IconButton(onClick = onMapClick) {
-                Icon(
-                    imageVector = Icons.Default.LocationOn,
-                    contentDescription = "Map",
-                    tint = TextSecondary
-                )
-            }
+                // Action Icons
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = onFavoriteClick,
+                        modifier = Modifier.size(38.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FavoriteBorder,
+                            contentDescription = "Favorites",
+                            tint = White.copy(alpha = 0.9f),
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
 
-            // Chat Support Icon
-            IconButton(onClick = onChatClick) {
-                Icon(
-                    imageVector = Icons.Default.ChatBubbleOutline,
-                    contentDescription = "Chat",
-                    tint = TextSecondary
-                )
-            }
+                    IconButton(
+                        onClick = onChatClick,
+                        modifier = Modifier.size(38.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ChatBubbleOutline,
+                            contentDescription = "Chat",
+                            tint = White.copy(alpha = 0.9f),
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
 
-            // Notification Icon with Badge
-            BadgedBox(
-                badge = {
-                    if (notificationBadge > 0) {
-                        Badge(
-                            containerColor = AccentGold,
-                            contentColor = White
+                    IconButton(
+                        onClick = onMapClick,
+                        modifier = Modifier.size(38.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Map",
+                            tint = White.copy(alpha = 0.9f),
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    BadgedBox(
+                        badge = {
+                            if (notificationBadge > 0) {
+                                Badge(
+                                    containerColor = AccentGold,
+                                    contentColor = White
+                                ) {
+                                    Text(
+                                        text = if (notificationBadge > 99) "99+" else notificationBadge.toString(),
+                                        fontSize = 9.sp,
+                                        fontFamily = Poppins
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        IconButton(
+                            onClick = onNotificationClick,
+                            modifier = Modifier.size(38.dp)
                         ) {
-                            Text(
-                                text = if (notificationBadge > 99) "99+" else notificationBadge.toString(),
-                                fontSize = 10.sp,
-                                fontFamily = Poppins
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "Notifications",
+                                tint = White.copy(alpha = 0.9f),
+                                modifier = Modifier.size(22.dp)
                             )
                         }
                     }
                 }
+            }
+
+            // Row 2: Search Bar
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+                    .clickable { onSearchClick() },
+                shape = LafyuuShapes.SearchBarShape,
+                color = White
             ) {
-                IconButton(onClick = onNotificationClick) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                        .padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Notifications",
-                        tint = TextSecondary
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        tint = TextHint,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "Search products...",
+                        fontFamily = Poppins,
+                        fontSize = 14.sp,
+                        color = TextHint
                     )
                 }
             }
