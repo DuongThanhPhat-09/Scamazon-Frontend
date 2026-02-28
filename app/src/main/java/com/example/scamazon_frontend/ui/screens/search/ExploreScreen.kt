@@ -30,6 +30,15 @@ import com.example.scamazon_frontend.core.utils.formatPrice
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +52,33 @@ fun ExploreScreen(
     val sortBy by viewModel.sortBy.collectAsStateWithLifecycle()
     var showSortSheet by remember { mutableStateOf(false) }
 
+    // Auto-focus & entrance animation
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    var isVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        isVisible = true
+        delay(350)
+        focusRequester.requestFocus()
+    }
+
+    val searchBarOffsetY by animateDpAsState(
+        targetValue = if (isVisible) 0.dp else (-16).dp,
+        animationSpec = tween(300, easing = FastOutSlowInEasing),
+        label = "searchBarOffset"
+    )
+    val searchBarAlpha by animateFloatAsState(
+        targetValue = if (isVisible) 1f else 0f,
+        animationSpec = tween(300),
+        label = "searchBarAlpha"
+    )
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (isVisible) 1f else 0f,
+        animationSpec = tween(350, delayMillis = 150),
+        label = "contentAlpha"
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -51,20 +87,25 @@ fun ExploreScreen(
         // Top Bar with Search
         LafyuuTopAppBar(title = "Explore", onBackClick = onNavigateBack)
 
-        // Search Bar
-        LafyuuTextField(
+        // Search Bar with auto-focus & slide-in animation
+        LafyuuSearchField(
             value = searchQuery,
             onValueChange = { viewModel.onSearchQueryChange(it) },
             placeholder = "Search products...",
-            leadingIcon = Icons.Default.Search,
-            modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = 8.dp)
+            onSearch = { keyboardController?.hide() },
+            modifier = Modifier
+                .padding(horizontal = Dimens.ScreenPadding, vertical = 8.dp)
+                .offset(y = searchBarOffsetY)
+                .alpha(searchBarAlpha)
+                .focusRequester(focusRequester)
         )
 
-        // Sort & Filter Row
+        // Sort & Filter Row (staggered fade-in)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Dimens.ScreenPadding, vertical = 4.dp),
+                .padding(horizontal = Dimens.ScreenPadding, vertical = 4.dp)
+                .alpha(contentAlpha),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -92,60 +133,62 @@ fun ExploreScreen(
             )
         }
 
-        // Products Grid
-        when (productsState) {
-            is Resource.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = PrimaryBlue)
-                }
-            }
-            is Resource.Error -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = productsState.message ?: "Error loading products",
-                            style = Typography.bodyLarge,
-                            color = StatusError
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        LafyuuPrimaryButton(
-                            text = "Retry",
-                            onClick = { viewModel.searchProducts() },
-                            modifier = Modifier.width(200.dp)
-                        )
-                    }
-                }
-            }
-            is Resource.Success -> {
-                val products = productsState.data!!
-                if (products.isEmpty()) {
+        // Products Grid (staggered fade-in)
+        Box(modifier = Modifier.fillMaxSize().alpha(contentAlpha)) {
+            when (productsState) {
+                is Resource.Loading -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        EmptyState(
-                            title = "No Products Found",
-                            message = "Try searching with different keywords"
-                        )
+                        CircularProgressIndicator(color = PrimaryBlue)
                     }
-                } else {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        contentPadding = PaddingValues(Dimens.ScreenPadding),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                }
+                is Resource.Error -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        items(products) { product ->
-                            SearchProductCard(
-                                product = product,
-                                onClick = { onProductClick(product.slug) }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = productsState.message ?: "Error loading products",
+                                style = Typography.bodyLarge,
+                                color = StatusError
                             )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            LafyuuPrimaryButton(
+                                text = "Retry",
+                                onClick = { viewModel.searchProducts() },
+                                modifier = Modifier.width(200.dp)
+                            )
+                        }
+                    }
+                }
+                is Resource.Success -> {
+                    val products = productsState.data!!
+                    if (products.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            EmptyState(
+                                title = "No Products Found",
+                                message = "Try searching with different keywords"
+                            )
+                        }
+                    } else {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            contentPadding = PaddingValues(Dimens.ScreenPadding),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(products) { product ->
+                                SearchProductCard(
+                                    product = product,
+                                    onClick = { onProductClick(product.slug) }
+                                )
+                            }
                         }
                     }
                 }
