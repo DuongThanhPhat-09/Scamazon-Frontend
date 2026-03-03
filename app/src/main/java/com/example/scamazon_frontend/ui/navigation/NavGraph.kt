@@ -28,8 +28,11 @@ import com.example.scamazon_frontend.ui.screens.admin.order.AdminOrderDetailScre
 import com.example.scamazon_frontend.ui.screens.admin.order.AdminOrderListScreen
 import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductFormScreen
 import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductListScreen
+import com.example.scamazon_frontend.ui.screens.auth.ForgotPasswordScreen
 import com.example.scamazon_frontend.ui.screens.auth.LoginScreen
 import com.example.scamazon_frontend.ui.screens.auth.RegisterScreen
+import com.example.scamazon_frontend.ui.screens.auth.ResetPasswordScreen
+import com.example.scamazon_frontend.ui.screens.auth.VerifyOtpScreen
 import com.example.scamazon_frontend.ui.screens.cart.CartScreen
 import com.example.scamazon_frontend.ui.screens.checkout.CheckoutScreen
 import com.example.scamazon_frontend.ui.screens.checkout.OrderSuccessScreen
@@ -450,7 +453,46 @@ fun NavGraph(
         }
 
         composable(route = Screen.ForgotPassword.route) {
-            PlaceholderScreen(screenName = "Forgot Password")
+            ForgotPasswordScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToVerifyOtp = { email ->
+                    navController.navigate(Screen.VerifyOtp.createRoute(email))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.VerifyOtp.route,
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            VerifyOtpScreen(
+                email = email,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToResetPassword = { e, otp ->
+                    navController.navigate(Screen.ResetPassword.createRoute(e, otp))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.ResetPassword.route,
+            arguments = listOf(
+                navArgument("email") { type = NavType.StringType },
+                navArgument("otp") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            val otp = backStackEntry.arguments?.getString("otp") ?: ""
+            ResetPasswordScreen(
+                email = email,
+                otp = otp,
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.ForgotPassword.route) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(

@@ -15,3 +15,18 @@ data class RegisterRequest(
     @SerializedName("fullName") val fullName: String?,
     @SerializedName("phone") val phone: String?
 )
+
+data class ForgotPasswordRequest(
+    @SerializedName("email") val email: String
+)
+
+data class VerifyOtpRequest(
+    @SerializedName("email") val email: String,
+    @SerializedName("otp") val otp: String
+)
+
+data class ResetPasswordRequest(
+    @SerializedName("email") val email: String,
+    @SerializedName("otp") val otp: String,
+    @SerializedName("newPassword") val newPassword: String
+)
