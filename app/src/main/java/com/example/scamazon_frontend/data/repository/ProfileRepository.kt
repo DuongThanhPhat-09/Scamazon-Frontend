@@ -7,6 +7,7 @@ import com.example.scamazon_frontend.data.models.profile.UpdateProfileRequest
 import com.example.scamazon_frontend.data.remote.ProfileService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MultipartBody
 import org.json.JSONObject
 import retrofit2.Response
 
@@ -18,6 +19,10 @@ class ProfileRepository(private val profileService: ProfileService) {
 
     suspend fun updateProfile(request: UpdateProfileRequest): Resource<ProfileDataDto> {
         return safeApiCall { profileService.updateProfile(request) }
+    }
+
+    suspend fun uploadAvatar(file: MultipartBody.Part): Resource<ProfileDataDto> {
+        return safeApiCall { profileService.uploadAvatar(file) }
     }
 
     private suspend fun <T> safeApiCall(apiCall: suspend () -> Response<ApiResponse<T>>): Resource<T> {
