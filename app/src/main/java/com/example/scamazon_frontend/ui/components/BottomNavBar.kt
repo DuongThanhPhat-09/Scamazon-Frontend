@@ -1,12 +1,18 @@
 package com.example.scamazon_frontend.ui.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,13 +50,6 @@ open class BottomNavItem(
         unselectedIcon = Icons.Outlined.ShoppingCart
     )
 
-    object Offer : BottomNavItem(
-        route = "offer",
-        title = "Offer",
-        selectedIcon = Icons.Filled.LocalOffer,
-        unselectedIcon = Icons.Outlined.LocalOffer
-    )
-
     object Account : BottomNavItem(
         route = "account",
         title = "Account",
@@ -68,7 +67,6 @@ fun LafyuuBottomNavBar(
         BottomNavItem.Home,
         BottomNavItem.Explore,
         BottomNavItem.Cart,
-        BottomNavItem.Offer,
         BottomNavItem.Account
     ),
     currentRoute: String,
@@ -76,6 +74,21 @@ fun LafyuuBottomNavBar(
     cartBadgeCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
+    // Bounce animation for badge
+    val badgeScale = remember { Animatable(1f) }
+    LaunchedEffect(cartBadgeCount) {
+        if (cartBadgeCount > 0) {
+            badgeScale.snapTo(1.5f)
+            badgeScale.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )
+            )
+        }
+    }
+
     NavigationBar(
         modifier = modifier,
         containerColor = BackgroundWhite,
@@ -93,7 +106,8 @@ fun LafyuuBottomNavBar(
                             badge = {
                                 Badge(
                                     containerColor = AccentGold,
-                                    contentColor = White
+                                    contentColor = White,
+                                    modifier = Modifier.scale(badgeScale.value)
                                 ) {
                                     Text(
                                         text = if (cartBadgeCount > 99) "99+" else cartBadgeCount.toString(),

@@ -2,6 +2,7 @@ package com.example.scamazon_frontend.ui.screens.product
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.scamazon_frontend.core.utils.CartCountManager
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.cart.AddToCartRequest
 import com.example.scamazon_frontend.data.models.cart.CartDataDto
@@ -34,9 +35,13 @@ class ProductDetailViewModel(
     fun addToCart(productId: Int, quantity: Int = 1) {
         viewModelScope.launch {
             _addToCartState.value = Resource.Loading()
-            _addToCartState.value = cartRepository.addToCart(
+            val result = cartRepository.addToCart(
                 AddToCartRequest(productId = productId, quantity = quantity)
             )
+            if (result is Resource.Success) {
+                result.data?.let { CartCountManager.updateCount(it.totalItems) }
+            }
+            _addToCartState.value = result
         }
     }
 
