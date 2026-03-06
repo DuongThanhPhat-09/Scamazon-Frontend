@@ -6,12 +6,16 @@ import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.order.CreateOrderDataDto
 import com.example.scamazon_frontend.data.models.order.CreateOrderRequest
 import com.example.scamazon_frontend.data.repository.OrderRepository
+import com.example.scamazon_frontend.data.repository.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class CheckoutViewModel(private val orderRepository: OrderRepository) : ViewModel() {
+class CheckoutViewModel(
+    private val orderRepository: OrderRepository,
+    private val profileRepository: ProfileRepository
+) : ViewModel() {
 
     // Form fields
     private val _shippingName = MutableStateFlow("")
@@ -40,6 +44,29 @@ class CheckoutViewModel(private val orderRepository: OrderRepository) : ViewMode
 
     private val _orderState = MutableStateFlow<Resource<CreateOrderDataDto>?>(null)
     val orderState: StateFlow<Resource<CreateOrderDataDto>?> = _orderState.asStateFlow()
+
+    init {
+        loadUserProfile()
+    }
+
+    private fun loadUserProfile() {
+        viewModelScope.launch {
+            when (val result = profileRepository.getProfile()) {
+                is Resource.Success -> {
+                    val profile = result.data
+                    if (profile != null) {
+                        _shippingName.value = profile.fullName ?: ""
+                        _shippingPhone.value = profile.phone ?: ""
+                        _shippingAddress.value = profile.address ?: ""
+                        _shippingCity.value = profile.city ?: ""
+                        _shippingDistrict.value = profile.district ?: ""
+                        _shippingWard.value = profile.ward ?: ""
+                    }
+                }
+                else -> { /* Silently fail – user can still fill in manually */ }
+            }
+        }
+    }
 
     fun onShippingNameChange(value: String) { _shippingName.value = value }
     fun onShippingPhoneChange(value: String) { _shippingPhone.value = value }
