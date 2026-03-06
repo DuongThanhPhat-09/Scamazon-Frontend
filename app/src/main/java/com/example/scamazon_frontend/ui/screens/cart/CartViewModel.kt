@@ -2,6 +2,7 @@ package com.example.scamazon_frontend.ui.screens.cart
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.scamazon_frontend.core.utils.CartCountManager
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.cart.CartDataDto
 import com.example.scamazon_frontend.data.models.cart.UpdateCartItemRequest
@@ -26,7 +27,11 @@ class CartViewModel(private val repository: CartRepository) : ViewModel() {
     fun fetchCart() {
         viewModelScope.launch {
             _cartState.value = Resource.Loading()
-            _cartState.value = repository.getCart()
+            val result = repository.getCart()
+            if (result is Resource.Success) {
+                result.data?.let { CartCountManager.updateCount(it.totalItems) }
+            }
+            _cartState.value = result
         }
     }
 
@@ -35,7 +40,7 @@ class CartViewModel(private val repository: CartRepository) : ViewModel() {
             val result = repository.updateCartItem(itemId, UpdateCartItemRequest(quantity))
             when (result) {
                 is Resource.Success -> {
-                    // Refresh the whole cart to get updated totals
+                    result.data?.let { CartCountManager.updateCount(it.totalItems) }
                     _cartState.value = result
                 }
                 is Resource.Error -> {
@@ -51,7 +56,6 @@ class CartViewModel(private val repository: CartRepository) : ViewModel() {
             val result = repository.removeCartItem(itemId)
             when (result) {
                 is Resource.Success -> {
-                    // Refresh cart after removal
                     fetchCart()
                 }
                 is Resource.Error -> {

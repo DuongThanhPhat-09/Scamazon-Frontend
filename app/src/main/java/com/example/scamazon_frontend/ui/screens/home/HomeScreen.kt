@@ -21,7 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scamazon_frontend.core.utils.Resource
-import com.example.scamazon_frontend.data.models.category.CategoryDto
+
 import com.example.scamazon_frontend.data.models.product.ProductDto
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.screens.favorite.FavoriteViewModel
@@ -39,7 +39,7 @@ fun HomeScreen(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     
-    val categoriesState by viewModel.categoriesState.collectAsStateWithLifecycle()
+
     val flashSaleState by viewModel.flashSaleState.collectAsStateWithLifecycle()
     val megaSaleState by viewModel.megaSaleState.collectAsStateWithLifecycle()
     val recommendedState by viewModel.recommendedState.collectAsStateWithLifecycle()
@@ -79,20 +79,7 @@ fun HomeScreen(
                 )
             }
 
-            // Categories Section
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                SectionHeader(
-                    title = "Category",
-                    onSeeAllClick = { /* Navigate to categories */ }
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                when (categoriesState) {
-                    is Resource.Loading -> CircularProgressIndicator(modifier = Modifier.padding(Dimens.ScreenPadding))
-                    is Resource.Success -> CategoriesRow(categoriesState.data ?: emptyList())
-                    is Resource.Error -> Text("Error loading categories", modifier = Modifier.padding(Dimens.ScreenPadding))
-                }
-            }
+
 
             // Flash Sale Section
             item {
@@ -188,21 +175,7 @@ private fun SectionHeader(
     }
 }
 
-@Composable
-private fun CategoriesRow(categories: List<CategoryDto>) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(categories) { category ->
-            CategoryCard(
-                name = category.name,
-                icon = Icons.Default.Category,
-                onClick = { /* Navigate to category */ }
-            )
-        }
-    }
-}
+
 
 @Composable
 private fun ProductsRow(
