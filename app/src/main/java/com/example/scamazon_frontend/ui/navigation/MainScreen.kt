@@ -7,9 +7,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.scamazon_frontend.core.utils.CartCountManager
 import com.example.scamazon_frontend.ui.components.BottomNavItem
 import com.example.scamazon_frontend.ui.components.LafyuuBottomNavBar
 
@@ -20,9 +22,9 @@ import com.example.scamazon_frontend.ui.components.LafyuuBottomNavBar
  */
 @Composable
 fun MainScreen(
-    navController: NavHostController = rememberNavController(),
-    cartItemCount: Int = 0
+    navController: NavHostController = rememberNavController()
 ) {
+    val cartItemCount by CartCountManager.cartCount.collectAsStateWithLifecycle()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -31,7 +33,6 @@ fun MainScreen(
         Screen.Home.route,
         Screen.Explore.route,
         Screen.Cart.route,
-        Screen.Offer.route,
         Screen.Account.route
     )
 
@@ -99,7 +100,6 @@ fun getBottomNavItem(route: String?): BottomNavItem? {
         Screen.Home.route -> BottomNavItem.Home
         Screen.Explore.route -> BottomNavItem.Explore
         Screen.Cart.route -> BottomNavItem.Cart
-        Screen.Offer.route -> BottomNavItem.Offer
         Screen.Account.route -> BottomNavItem.Account
         else -> null
     }
