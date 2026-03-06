@@ -1,8 +1,10 @@
 package com.example.scamazon_frontend.ui.screens.checkout
 
+import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -18,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.di.ViewModelFactory
@@ -101,6 +103,11 @@ fun PaymentQRScreen(
                 is Resource.Success -> {
                     val qrUrl = qrState.data ?: ""
 
+                    // Debug log
+                    LaunchedEffect(qrUrl) {
+                        Log.d("PaymentQR", "QR URL: $qrUrl")
+                    }
+
                     // QR Code Image
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -114,7 +121,9 @@ fun PaymentQRScreen(
                                 .padding(16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            AsyncImage(
+                            var imageLoadFailed by remember { mutableStateOf(false) }
+
+                            SubcomposeAsyncImage(
                                 model = ImageRequest.Builder(LocalContext.current)
                                     .data(qrUrl)
                                     .crossfade(true)
@@ -123,8 +132,63 @@ fun PaymentQRScreen(
                                 modifier = Modifier
                                     .size(280.dp)
                                     .background(White),
-                                contentScale = ContentScale.Fit
+                                contentScale = ContentScale.Fit,
+                                loading = {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            color = PrimaryBlue,
+                                            modifier = Modifier.size(40.dp)
+                                        )
+                                    }
+                                },
+                                error = {
+                                    LaunchedEffect(Unit) {
+                                        imageLoadFailed = true
+                                        Log.e("PaymentQR", "Failed to load QR image from: $qrUrl")
+                                    }
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Icon(
+                                                imageVector = Icons.Default.Warning,
+                                                contentDescription = null,
+                                                tint = TextSecondary,
+                                                modifier = Modifier.size(48.dp)
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = "Cannot load QR image",
+                                                color = TextSecondary,
+                                                fontSize = 14.sp
+                                            )
+                                        }
+                                    }
+                                }
                             )
+
+                            // Show QR URL as fallback if image fails
+                            if (imageLoadFailed && qrUrl.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Open this link in browser to view QR:",
+                                    fontSize = 12.sp,
+                                    color = TextSecondary
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                SelectionContainer {
+                                    Text(
+                                        text = qrUrl,
+                                        fontSize = 11.sp,
+                                        color = PrimaryBlue,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
                         }
                     }
 
