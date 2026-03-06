@@ -104,8 +104,10 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
         if (modelClass.isAssignableFrom(CheckoutViewModel::class.java)) {
             val orderService = retrofit.create(OrderService::class.java)
             val orderRepository = OrderRepository(orderService)
+            val profileService = retrofit.create(ProfileService::class.java)
+            val profileRepository = ProfileRepository(profileService)
             @Suppress("UNCHECKED_CAST")
-            return CheckoutViewModel(orderRepository) as T
+            return CheckoutViewModel(orderRepository, profileRepository) as T
         }
 
         if (modelClass.isAssignableFrom(OrderHistoryViewModel::class.java)) {

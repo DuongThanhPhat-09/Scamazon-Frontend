@@ -356,7 +356,7 @@ fun ProductDetailScreen(
                                         animProgress.snapTo(0f)
                                         animProgress.animateTo(
                                             targetValue = 1f,
-                                            animationSpec = tween(durationMillis = 600)
+                                            animationSpec = tween(durationMillis = 1200)
                                         )
                                         showFlyDot = false
                                     }

@@ -1,8 +1,13 @@
 package com.example.scamazon_frontend.ui.screens.profile
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -10,12 +15,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.profile.UpdateProfileRequest
 import com.example.scamazon_frontend.di.ViewModelFactory
@@ -27,8 +38,10 @@ fun EditProfileScreen(
     viewModel: ProfileViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
     val updateState by viewModel.updateState.collectAsStateWithLifecycle()
+    val uploadAvatarState by viewModel.uploadAvatarState.collectAsStateWithLifecycle()
 
     // Form fields
     var fullName by remember { mutableStateOf("") }
@@ -39,6 +52,15 @@ fun EditProfileScreen(
     var district by remember { mutableStateOf("") }
     var ward by remember { mutableStateOf("") }
     var initialized by remember { mutableStateOf(false) }
+
+    // Image picker launcher
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.uploadAvatar(context, uri)
+        }
+    }
 
     // Populate form when profile loads
     LaunchedEffect(profileState) {
@@ -66,6 +88,21 @@ fun EditProfileScreen(
             is Resource.Error -> {
                 snackbarHostState.showSnackbar(updateState?.message ?: "Update failed")
                 viewModel.resetUpdateState()
+            }
+            else -> {}
+        }
+    }
+
+    // Handle avatar upload result
+    LaunchedEffect(uploadAvatarState) {
+        when (uploadAvatarState) {
+            is Resource.Success -> {
+                snackbarHostState.showSnackbar("Avatar updated successfully!")
+                viewModel.resetUploadAvatarState()
+            }
+            is Resource.Error -> {
+                snackbarHostState.showSnackbar(uploadAvatarState?.message ?: "Avatar upload failed")
+                viewModel.resetUploadAvatarState()
             }
             else -> {}
         }
@@ -104,6 +141,7 @@ fun EditProfileScreen(
                     }
                 }
                 is Resource.Success -> {
+                    val profile = profileState.data
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -111,6 +149,88 @@ fun EditProfileScreen(
                             .padding(Dimens.ScreenPadding),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        // Avatar Section
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clip(CircleShape)
+                                    .background(PrimaryBlue.copy(alpha = 0.1f))
+                                    .clickable {
+                                        photoPickerLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                val isUploading = uploadAvatarState is Resource.Loading
+                                val avatarUrl = profile?.avatarUrl
+
+                                if (isUploading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(36.dp),
+                                        color = PrimaryBlue,
+                                        strokeWidth = 3.dp
+                                    )
+                                } else if (!avatarUrl.isNullOrBlank()) {
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(context)
+                                            .data(avatarUrl)
+                                            .crossfade(true)
+                                            .build(),
+                                        contentDescription = "Avatar",
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    // Fallback: first letter of username
+                                    Text(
+                                        text = (profile?.username?.firstOrNull()?.uppercase() ?: "U"),
+                                        fontSize = 36.sp,
+                                        color = PrimaryBlue,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+
+                            // Camera icon overlay
+                            if (uploadAvatarState !is Resource.Loading) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(100.dp)
+                                        .align(Alignment.Center)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CameraAlt,
+                                        contentDescription = "Change avatar",
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .align(Alignment.BottomEnd)
+                                            .background(PrimaryBlue, CircleShape)
+                                            .padding(4.dp),
+                                        tint = White
+                                    )
+                                }
+                            }
+                        }
+
+                        Text(
+                            text = "Tap avatar to change",
+                            style = Typography.bodySmall,
+                            color = TextSecondary,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+
+                        HorizontalDivider(color = BorderLight)
+
                         // Full Name
                         Text(text = "Full Name", style = Typography.titleSmall, color = TextPrimary)
                         LafyuuTextField(
