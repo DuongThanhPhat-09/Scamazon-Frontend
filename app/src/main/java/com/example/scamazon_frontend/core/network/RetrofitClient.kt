@@ -10,8 +10,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
-    // 10.0.2.2 is the special IP alias to your host loopback interface for Android Emulator
-    private const val BASE_URL = "http://10.0.2.2:5255"
+    // Deployed backend on Render
+    private const val BASE_URL = "https://scamazon-backend-nman.onrender.com"
 
     private var retrofit: Retrofit? = null
 

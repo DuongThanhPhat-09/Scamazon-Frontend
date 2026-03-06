@@ -31,8 +31,8 @@ class SignalRManager private constructor(context: Context) {
     val chatEvents: SharedFlow<ChatMessageDto> = _chatEvents.asSharedFlow()
 
     init {
-        // Use the same BASE_URL, but point to the hub
-        val baseUrl = "http://10.0.2.2:5255"
+        // Deployed backend on Render
+        val baseUrl = "https://scamazon-backend-nman.onrender.com"
 
         try {
             hubConnection = HubConnectionBuilder.create("$baseUrl/app-hub")
