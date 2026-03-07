@@ -110,6 +110,9 @@ fun NavGraph(
                 onNavigateToProductDetail = { productId ->
                     navController.navigate(Screen.ProductDetail.createRoute(productId))
                 },
+                onNavigateToCategory = { categoryId ->
+                    navController.navigate(Screen.ProductList.createRoute(categoryId.toString()))
+                },
                 onNavigateToSearch = {
                     navController.navigate(Screen.Search.route)
                 },
