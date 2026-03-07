@@ -391,6 +391,9 @@ fun NavGraph(
                 },
                 onOrderClick = { orderId ->
                     navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                },
+                onContinuePayment = { orderId ->
+                    navController.navigate(Screen.PaymentQR.createRoute(orderId))
                 }
             )
         }

@@ -1,7 +1,7 @@
 package com.example.scamazon_frontend.ui.screens.order
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,7 +34,8 @@ import com.example.scamazon_frontend.ui.theme.*
 fun OrderHistoryScreen(
     viewModel: OrderHistoryViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {},
-    onOrderClick: (String) -> Unit = {}
+    onOrderClick: (String) -> Unit = {},
+    onContinuePayment: (String) -> Unit = {}
 ) {
     val ordersState by viewModel.ordersState.collectAsStateWithLifecycle()
 
@@ -98,9 +99,12 @@ fun OrderHistoryScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(orders, key = { it.id }) { order ->
+                            val isPending = order.status?.lowercase() == "pending"
                             OrderCard(
                                 order = order,
-                                onClick = { onOrderClick(order.id.toString()) }
+                                isPending = isPending,
+                                onDetailClick = { onOrderClick(order.id.toString()) },
+                                onContinuePayment = { onContinuePayment(order.id.toString()) }
                             )
                         }
                     }
@@ -113,12 +117,13 @@ fun OrderHistoryScreen(
 @Composable
 private fun OrderCard(
     order: OrderSummaryDto,
-    onClick: () -> Unit
+    isPending: Boolean,
+    onDetailClick: () -> Unit,
+    onContinuePayment: () -> Unit
 ) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+            .fillMaxWidth(),
         shape = LafyuuShapes.CardShape,
         colors = CardDefaults.cardColors(containerColor = BackgroundWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -188,6 +193,66 @@ private fun OrderCard(
                         style = Typography.bodySmall,
                         color = TextHint
                     )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Action Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (isPending) {
+                    // "Continue Payment" button for pending orders
+                    Button(
+                        onClick = onContinuePayment,
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PrimaryBlue
+                        ),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Payment,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = White
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Tiếp tục thanh toán",
+                            fontFamily = Poppins,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp,
+                            color = White
+                        )
+                    }
+                } else {
+                    // "Detail" button for non-pending orders
+                    OutlinedButton(
+                        onClick = onDetailClick,
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = PrimaryBlue
+                        ),
+                        border = BorderStroke(1.dp, PrimaryBlue),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Visibility,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Chi tiết",
+                            fontFamily = Poppins,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp
+                        )
+                    }
                 }
             }
         }
