@@ -142,7 +142,7 @@ fun CheckoutScreen(
 
                 val paymentOptions = listOf(
                     "cod" to "Cash on Delivery (COD)",
-                    "vnpay" to "Bank Transfer (QR)"
+                    "vnpay" to "Online Payment (VNPay)"
                 )
 
                 paymentOptions.forEach { (value, label) ->
