@@ -37,7 +37,7 @@ class CartRepository(private val cartService: CartService) {
                         Resource.Error(body?.message ?: "Unknown error")
                     }
                 } else {
-                    Resource.Error("API Error: ${response.code()}")
+                 Resource.Error("API Error: ${response.code()}")
                 }
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Network error occurred")
