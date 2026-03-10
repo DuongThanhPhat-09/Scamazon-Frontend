@@ -4,9 +4,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.di.ViewModelFactory
+import com.example.scamazon_frontend.ui.screens.checkout.PaymentQRViewModel
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -36,7 +42,7 @@ import com.example.scamazon_frontend.ui.screens.auth.VerifyOtpScreen
 import com.example.scamazon_frontend.ui.screens.cart.CartScreen
 import com.example.scamazon_frontend.ui.screens.checkout.CheckoutScreen
 import com.example.scamazon_frontend.ui.screens.checkout.OrderSuccessScreen
-import com.example.scamazon_frontend.ui.screens.checkout.PaymentQRScreen
+import com.example.scamazon_frontend.ui.screens.checkout.PaymentWebViewScreen
 import com.example.scamazon_frontend.ui.screens.home.HomeScreen
 import com.example.scamazon_frontend.ui.screens.order.OrderDetailScreen
 import com.example.scamazon_frontend.ui.screens.order.OrderHistoryScreen
@@ -317,19 +323,78 @@ fun NavGraph(
             )
         ) { backStackEntry ->
             val orderId = backStackEntry.arguments?.getString(NavArgs.ORDER_ID)?.toIntOrNull() ?: 0
-            PaymentQRScreen(
-                orderId = orderId,
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
-                onPaymentSuccess = {
+            val paymentViewModel: PaymentQRViewModel = viewModel(factory = ViewModelFactory(LocalContext.current))
+            val qrState by paymentViewModel.qrState.collectAsStateWithLifecycle()
+            val paymentStatus by paymentViewModel.paymentStatus.collectAsStateWithLifecycle()
+
+            // Fetch VNPay payment URL khi vào màn hình
+            LaunchedEffect(orderId) {
+                paymentViewModel.createPaymentQR(orderId)
+            }
+
+            // Polling phát hiện thành công (IPN đã xử lý ở backend)
+            LaunchedEffect(paymentStatus) {
+                if (paymentStatus == "success") {
                     navController.navigate(
                         Screen.OrderSuccess.createRoute(orderId.toString())
                     ) {
                         popUpTo(Screen.Home.route)
                     }
                 }
-            )
+            }
+
+            when (val state = qrState) {
+                is Resource.Loading -> {
+                    // Loading khi đang fetch URL từ backend
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Đang khởi tạo thanh toán...",
+                            style = Typography.bodyMedium,
+                            color = TextSecondary,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = state.message ?: "Không thể tạo URL thanh toán",
+                            style = Typography.bodyMedium,
+                            color = TextSecondary,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+                is Resource.Success -> {
+                    val paymentUrl = state.data ?: ""
+                    // Mở trang thanh toán VNPay trong WebView
+                    PaymentWebViewScreen(
+                        paymentUrl = paymentUrl,
+                        onPaymentSuccess = {
+                            // Stop polling trước để tránh navigate 2 lần
+                            paymentViewModel.stopPolling()
+                            navController.navigate(
+                                Screen.OrderSuccess.createRoute(orderId.toString())
+                            ) {
+                                popUpTo(Screen.Home.route)
+                            }
+                        },
+                        onPaymentFailed = {
+                            paymentViewModel.stopPolling()
+                            navController.popBackStack()
+                        },
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
         }
 
         composable(

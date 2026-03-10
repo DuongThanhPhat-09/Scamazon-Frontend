@@ -82,6 +82,11 @@ class PaymentQRViewModel(private val paymentService: PaymentService) : ViewModel
         }
     }
 
+    fun stopPolling() {
+        pollingJob?.cancel()
+        pollingJob = null
+    }
+
     override fun onCleared() {
         super.onCleared()
         pollingJob?.cancel()
