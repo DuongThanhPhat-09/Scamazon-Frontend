@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.secrets.gradle.plugin)
 }
 
 android {
@@ -51,6 +52,11 @@ android {
     }
 }
 
+secrets {
+    propertiesFileName = "local.properties"
+    defaultPropertiesFileName = "local.defaults.properties"
+}
+
 dependencies {
     // Core Android
     implementation(libs.androidx.core.ktx)
@@ -70,8 +76,10 @@ dependencies {
     // Navigation
     implementation(libs.androidx.navigation.compose)
 
-    // OpenStreetMap (free alternative to Google Maps)
-    implementation("org.osmdroid:osmdroid-android:6.1.18")
+    // Google Maps
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.maps)
+    implementation(libs.play.services.location)
 
     // Firebase
     implementation(platform(libs.firebase.bom))

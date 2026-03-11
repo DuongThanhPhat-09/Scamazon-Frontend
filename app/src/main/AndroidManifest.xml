@@ -17,6 +17,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ScamazonFrontend">
 
+        <!-- Google Maps API Key (injected from local.properties via Secrets plugin) -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
         <!-- Firebase Cloud Messaging Service -->
         <service
             android:name=".core.firebase.ScamazonFirebaseService"
