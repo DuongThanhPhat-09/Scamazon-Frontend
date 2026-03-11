@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import com.example.scamazon_frontend.core.utils.CartBadgeNotificationHelper
+import com.example.scamazon_frontend.core.utils.CartCountManager
 import com.example.scamazon_frontend.ui.navigation.MainScreen
 import com.example.scamazon_frontend.ui.theme.BackgroundWhite
 import com.example.scamazon_frontend.ui.theme.ScamazonFrontendTheme
@@ -48,6 +50,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        // App returned to foreground — cancel cart badge notification
+        CartBadgeNotificationHelper.cancelCartBadge(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // App going to background — show cart badge notification if items exist
+        val cartCount = CartCountManager.cartCount.value
+        if (cartCount > 0) {
+            // Also persist for safety
+            CartCountManager.updateCount(cartCount, this)
+            CartBadgeNotificationHelper.showCartBadge(this, cartCount)
+        }
+    }
+
     private fun askNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             when {
@@ -66,3 +85,4 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+

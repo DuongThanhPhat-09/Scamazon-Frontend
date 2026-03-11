@@ -1,7 +1,10 @@
 package com.example.scamazon_frontend.ui.screens.map
 
+import android.Manifest
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -10,14 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.example.scamazon_frontend.ui.components.LafyuuTopAppBar
 import com.example.scamazon_frontend.ui.theme.*
-import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.*
 
 @Composable
 fun MapScreen(
@@ -26,12 +27,51 @@ fun MapScreen(
     val context = LocalContext.current
 
     // Store location: 123-125 Đ. Lê Văn Việt, Thủ Đức
-    val storeLat = 10.8447
-    val storeLng = 106.7801
+    val storeLocation = LatLng(10.8447, 106.7801)
 
-    // Configure osmdroid user agent
+    // Camera state - start at store location
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(storeLocation, 15f)
+    }
+
+    // Location permission state
+    var hasLocationPermission by remember { mutableStateOf(false) }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        hasLocationPermission = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+    }
+
+    // Request location permission on first launch
     LaunchedEffect(Unit) {
-        Configuration.getInstance().userAgentValue = context.packageName
+        locationPermissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
+    }
+
+    // Map UI properties
+    val mapProperties by remember(hasLocationPermission) {
+        mutableStateOf(
+            MapProperties(
+                isMyLocationEnabled = hasLocationPermission,
+                mapType = MapType.NORMAL
+            )
+        )
+    }
+
+    val mapUiSettings by remember {
+        mutableStateOf(
+            MapUiSettings(
+                zoomControlsEnabled = true,
+                myLocationButtonEnabled = true,
+                compassEnabled = true
+            )
+        )
     }
 
     Scaffold(
@@ -47,30 +87,21 @@ fun MapScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // OpenStreetMap view
-            AndroidView(
+            // Google Map
+            GoogleMap(
                 modifier = Modifier.fillMaxSize(),
-                factory = { ctx ->
-                    MapView(ctx).apply {
-                        setTileSource(TileSourceFactory.MAPNIK)
-                        setMultiTouchControls(true)
-                        controller.setZoom(17.0)
-                        controller.setCenter(GeoPoint(storeLat, storeLng))
+                cameraPositionState = cameraPositionState,
+                properties = mapProperties,
+                uiSettings = mapUiSettings
+            ) {
+                // Store marker
+                Marker(
+                    state = MarkerState(position = storeLocation),
+                    title = "Scamazon Store",
+                    snippet = "123-125 Đ. Lê Văn Việt, Thủ Đức, TP HCM"
+                )
+            }
 
-                        // Add marker
-                        val marker = Marker(this)
-                        marker.position = GeoPoint(storeLat, storeLng)
-                        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                        marker.title = "Scamazon Store"
-                        marker.snippet = "123-125 Đ. Lê Văn Việt, Thủ Đức, TP HCM"
-                        overlays.add(marker)
-                    }
-                },
-                update = { mapView ->
-                    mapView.controller.setCenter(GeoPoint(storeLat, storeLng))
-                }
-            )
-            
             // Bottom Info Card
             Card(
                 modifier = Modifier
@@ -98,7 +129,9 @@ fun MapScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = {
-                            // Open Google Maps for directions
+                            // Open Google Maps for directions from current location
+                            val storeLat = storeLocation.latitude
+                            val storeLng = storeLocation.longitude
                             val uri = Uri.parse("google.navigation:q=$storeLat,$storeLng")
                             val intent = Intent(Intent.ACTION_VIEW, uri)
                             intent.setPackage("com.google.android.apps.maps")
