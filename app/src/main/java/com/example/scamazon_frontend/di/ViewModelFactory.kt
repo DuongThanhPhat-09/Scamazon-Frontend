@@ -179,6 +179,14 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             return FavoriteViewModel(favoriteRepository) as T
         }
 
+        if (modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.offer.TrendsViewModel::class.java)) {
+            val productService = retrofit.create(ProductService::class.java)
+            val categoryService = retrofit.create(CategoryService::class.java)
+            val homeRepository = HomeRepository(productService, categoryService)
+            @Suppress("UNCHECKED_CAST")
+            return com.example.scamazon_frontend.ui.screens.offer.TrendsViewModel(homeRepository, signalRManager) as T
+        }
+
         // Milestone 4 ViewModels
         if (modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.chat.ChatViewModel::class.java)) {
             val chatService = retrofit.create(com.example.scamazon_frontend.data.remote.ChatService::class.java)

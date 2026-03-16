@@ -37,7 +37,8 @@ class HomeRepository(
         maxPrice: Double? = null,
         minRating: Int? = null,
         sort: String? = null,
-        sortOrder: String? = null
+        sortOrder: String? = null,
+        isFeatured: Boolean? = null
     ): Resource<ProductPaginationResponse> {
         return safeApiCall {
             productService.getProducts(
@@ -49,7 +50,8 @@ class HomeRepository(
                 maxPrice = maxPrice,
                 minRating = minRating,
                 sortBy = sort,
-                sortOrder = sortOrder
+                sortOrder = sortOrder,
+                isFeatured = isFeatured
             )
         }
     }

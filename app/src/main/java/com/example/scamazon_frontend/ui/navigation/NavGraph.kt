@@ -258,7 +258,11 @@ fun NavGraph(
         }
 
         composable(route = Screen.Offer.route) {
-            PlaceholderScreen(screenName = "Offers")
+            com.example.scamazon_frontend.ui.screens.offer.TrendsScreen(
+                onProductClick = { slug ->
+                    navController.navigate(Screen.ProductDetail.createRoute(slug))
+                }
+            )
         }
 
         composable(
