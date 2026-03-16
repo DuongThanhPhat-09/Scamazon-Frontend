@@ -66,7 +66,8 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
         if (modelClass.isAssignableFrom(ProductListViewModel::class.java)) {
             val productService = retrofit.create(ProductService::class.java)
             val categoryService = retrofit.create(CategoryService::class.java)
-            val homeRepository = HomeRepository(productService, categoryService)
+            val brandService = retrofit.create(BrandService::class.java)
+            val homeRepository = HomeRepository(productService, categoryService, brandService)
             @Suppress("UNCHECKED_CAST")
             return ProductListViewModel(homeRepository, signalRManager) as T
         }
