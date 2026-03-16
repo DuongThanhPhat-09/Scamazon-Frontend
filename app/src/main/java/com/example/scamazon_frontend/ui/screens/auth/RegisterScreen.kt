@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocationCity
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Text
@@ -37,6 +40,10 @@ fun RegisterScreen(
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    var city by remember { mutableStateOf("") }
+    var district by remember { mutableStateOf("") }
+    var ward by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
@@ -156,6 +163,49 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            // Address Field (Optional)
+            LafyuuTextField(
+                value = address,
+                onValueChange = { address = it },
+                placeholder = "Address (Optional)",
+                leadingIcon = Icons.Default.Home,
+                imeAction = ImeAction.Next
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                LafyuuTextField(
+                    value = city,
+                    onValueChange = { city = it },
+                    placeholder = "City",
+                    modifier = Modifier.weight(1f),
+                    imeAction = ImeAction.Next
+                )
+                LafyuuTextField(
+                    value = district,
+                    onValueChange = { district = it },
+                    placeholder = "District",
+                    modifier = Modifier.weight(1f),
+                    imeAction = ImeAction.Next
+                )
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            LafyuuTextField(
+                value = ward,
+                onValueChange = { ward = it },
+                placeholder = "Ward",
+                leadingIcon = Icons.Default.LocationOn,
+                imeAction = ImeAction.Next
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
             // Password Field
             LafyuuPasswordField(
                 value = password,
@@ -198,11 +248,15 @@ fun RegisterScreen(
                             onValid = {
                                 viewModel.register(
                                     RegisterRequest(
-                                        username = email.substringBefore("@").replace(".", "_"), // basic strategy for username
+                                        username = email.substringBefore("@").replace(".", "_"),
                                         email = email,
                                         password = password,
                                         fullName = fullName,
-                                        phone = phone.ifBlank { null }
+                                        phone = phone.ifBlank { null },
+                                        address = address.ifBlank { null },
+                                        city = city.ifBlank { null },
+                                        district = district.ifBlank { null },
+                                        ward = ward.ifBlank { null }
                                     )
                                 )
                             }
@@ -235,7 +289,11 @@ fun RegisterScreen(
                                     email = email,
                                     password = password,
                                     fullName = fullName,
-                                    phone = phone.ifBlank { null }
+                                    phone = phone.ifBlank { null },
+                                    address = address.ifBlank { null },
+                                    city = city.ifBlank { null },
+                                    district = district.ifBlank { null },
+                                    ward = ward.ifBlank { null }
                                 )
                             )
                         }

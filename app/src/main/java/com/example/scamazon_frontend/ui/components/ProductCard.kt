@@ -48,6 +48,7 @@ fun ProductCard(
     Card(
         modifier = modifier
             .width(Dimens.ProductCardWidth)
+            .height(Dimens.ProductCardHeight)
             .clickable { onClick() },
         shape = LafyuuShapes.CardShape,
         colors = CardDefaults.cardColors(
@@ -117,10 +118,11 @@ fun ProductCard(
             // Product Info
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
+                    .fillMaxSize()
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Product Name
+                // Top: Product Name
                 Text(
                     text = productName,
                     fontFamily = Poppins,
@@ -128,61 +130,63 @@ fun ProductCard(
                     fontSize = 12.sp,
                     color = TextPrimary,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 16.sp
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Rating
-                if (rating > 0) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        repeat(5) { index ->
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = null,
-                                tint = if (index < rating) AccentGold else StarEmpty,
-                                modifier = Modifier.size(Dimens.StarSize)
-                            )
+                // Bottom: Rating + Price
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    // Rating
+                    if (rating > 0) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            repeat(5) { index ->
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = if (index < rating) AccentGold else StarEmpty,
+                                    modifier = Modifier.size(Dimens.StarSize)
+                                )
+                            }
                         }
+                    } else {
+                        Spacer(modifier = Modifier.height(Dimens.StarSize))
                     }
-                }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    // Price
+                    Text(
+                        text = "${formatPrice(price)}đ",
+                        fontFamily = Poppins,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        color = PrimaryBlue
+                    )
 
-                // Price
-                Text(
-                    text = "${formatPrice(price)}đ",
-                    fontFamily = Poppins,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = PrimaryBlue
-                )
-
-                // Original Price (if discounted)
-                originalPrice?.let {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "${formatPrice(it)}đ",
-                            fontFamily = Poppins,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 10.sp,
-                            color = TextHint,
-                            textDecoration = TextDecoration.LineThrough
-                        )
-                        discount?.let { disc ->
+                    // Original Price (if discounted)
+                    originalPrice?.let {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                text = "$disc% Off",
+                                text = "${formatPrice(it)}đ",
                                 fontFamily = Poppins,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.Normal,
                                 fontSize = 10.sp,
-                                color = AccentGold
+                                color = TextHint,
+                                textDecoration = TextDecoration.LineThrough
                             )
+                            discount?.let { disc ->
+                                Text(
+                                    text = "$disc% Off",
+                                    fontFamily = Poppins,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp,
+                                    color = AccentGold
+                                )
+                            }
                         }
                     }
                 }

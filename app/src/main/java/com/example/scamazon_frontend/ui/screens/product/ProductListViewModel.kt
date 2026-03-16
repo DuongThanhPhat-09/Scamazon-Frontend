@@ -3,14 +3,26 @@ package com.example.scamazon_frontend.ui.screens.product
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.data.models.admin.BrandDto
 import com.example.scamazon_frontend.data.models.product.ProductDto
 import com.example.scamazon_frontend.data.repository.HomeRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.example.scamazon_frontend.core.network.AppEvent
 import com.example.scamazon_frontend.core.network.SignalRManager
+
+data class ProductFilter(
+    val brandId: Int? = null,
+    val minPrice: Double? = null,
+    val maxPrice: Double? = null,
+    val minRating: Int? = null
+) {
+    val activeCount: Int get() = listOfNotNull(brandId, minPrice, maxPrice, minRating).size
+    val isEmpty: Boolean get() = activeCount == 0
+}
 
 class ProductListViewModel(
     private val repository: HomeRepository,
@@ -23,6 +35,12 @@ class ProductListViewModel(
     private val _currentSort = MutableStateFlow("newest")
     val currentSort: StateFlow<String> = _currentSort.asStateFlow()
 
+    private val _currentFilter = MutableStateFlow(ProductFilter())
+    val currentFilter: StateFlow<ProductFilter> = _currentFilter.asStateFlow()
+
+    private val _brands = MutableStateFlow<List<BrandDto>>(emptyList())
+    val brands: StateFlow<List<BrandDto>> = _brands.asStateFlow()
+
     private val _currentPage = MutableStateFlow(1)
     val currentPage: StateFlow<Int> = _currentPage.asStateFlow()
 
@@ -30,8 +48,9 @@ class ProductListViewModel(
     val totalPages: StateFlow<Int> = _totalPages.asStateFlow()
 
     private var categoryId: Int? = null
+    private var fetchJob: Job? = null
 
-    // Raw data from API (unsorted)
+    // Raw data from API (accumulates across pages)
     private val allProducts = mutableListOf<ProductDto>()
 
     init {
@@ -42,6 +61,7 @@ class ProductListViewModel(
                 }
             }
         }
+        loadBrands()
     }
 
     fun init(categoryId: Int?) {
@@ -52,9 +72,18 @@ class ProductListViewModel(
     fun setSort(sort: String) {
         if (_currentSort.value != sort) {
             _currentSort.value = sort
-            // Client-side sort: just re-sort the already-loaded data
             applySortAndEmit()
         }
+    }
+
+    fun setFilter(filter: ProductFilter) {
+        _currentFilter.value = filter
+        fetchProducts(reset = true)
+    }
+
+    fun clearFilter() {
+        _currentFilter.value = ProductFilter()
+        fetchProducts(reset = true)
     }
 
     fun loadNextPage() {
@@ -68,18 +97,33 @@ class ProductListViewModel(
         fetchProducts(reset = true)
     }
 
-    private fun fetchProducts(reset: Boolean) {
+    private fun loadBrands() {
         viewModelScope.launch {
+            when (val result = repository.getBrands()) {
+                is Resource.Success -> _brands.value = result.data ?: emptyList()
+                else -> {}
+            }
+        }
+    }
+
+    private fun fetchProducts(reset: Boolean) {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
             if (reset) {
                 _currentPage.value = 1
                 allProducts.clear()
                 _productsState.value = Resource.Loading()
             }
 
+            val filter = _currentFilter.value
             val result = repository.getProducts(
                 page = _currentPage.value,
                 limit = 20,
-                categoryId = categoryId
+                categoryId = categoryId,
+                brandId = filter.brandId,
+                minPrice = filter.minPrice,
+                maxPrice = filter.maxPrice,
+                minRating = filter.minRating
             )
 
             when (result) {
