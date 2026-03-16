@@ -44,6 +44,7 @@ fun HomeScreen(
     favoriteViewModel: FavoriteViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateToProductDetail: (String) -> Unit = {},
     onNavigateToCategory: (Int) -> Unit = {},
+    onNavigateToProductList: (categoryId: String?, title: String) -> Unit = { _, _ -> },
     onNavigateToSearch: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToWishlist: () -> Unit = {},
@@ -98,7 +99,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 SectionHeader(
                     title = "Category",
-                    onSeeAllClick = { /* Navigate to all categories */ }
+                    onSeeAllClick = { onNavigateToProductList(null, "All Products") }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 when (categoriesState) {
@@ -116,7 +117,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 SectionHeader(
                     title = "Flash Sale",
-                    onSeeAllClick = { /* Navigate to flash sale */ }
+                    onSeeAllClick = { onNavigateToProductList(null, "Flash Sale") }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 when (flashSaleState) {
@@ -136,7 +137,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 SectionHeader(
                     title = "Mega Sale",
-                    onSeeAllClick = { /* Navigate to mega sale */ }
+                    onSeeAllClick = { onNavigateToProductList(null, "Mega Sale") }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 when (megaSaleState) {

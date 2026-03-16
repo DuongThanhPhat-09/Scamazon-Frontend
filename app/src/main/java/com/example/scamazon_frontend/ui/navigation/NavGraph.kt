@@ -119,6 +119,9 @@ fun NavGraph(
                 onNavigateToCategory = { categoryId ->
                     navController.navigate(Screen.ProductList.createRoute(categoryId.toString()))
                 },
+                onNavigateToProductList = { categoryId, title ->
+                    navController.navigate(Screen.ProductList.createRoute(categoryId ?: "all", title))
+                },
                 onNavigateToSearch = {
                     navController.navigate(Screen.Search.route)
                 },
@@ -206,13 +209,15 @@ fun NavGraph(
         composable(
             route = Screen.ProductList.route,
             arguments = listOf(
-                navArgument(NavArgs.CATEGORY_ID) { type = NavType.StringType }
+                navArgument(NavArgs.CATEGORY_ID) { type = NavType.StringType },
+                navArgument("title") { type = NavType.StringType; defaultValue = "Products" }
             )
         ) { backStackEntry ->
             val catId = backStackEntry.arguments?.getString(NavArgs.CATEGORY_ID) ?: ""
+            val title = backStackEntry.arguments?.getString("title") ?: "Products"
             ProductListScreen(
                 categoryId = catId,
-                categoryName = null,
+                categoryName = title,
                 onNavigateBack = {
                     navController.popBackStack()
                 },

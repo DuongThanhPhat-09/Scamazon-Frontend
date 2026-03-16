@@ -36,8 +36,9 @@ sealed class Screen(val route: String) {
         fun createRoute(productId: String) = "product_detail/$productId"
     }
 
-    object ProductList : Screen("product_list/{categoryId}") {
-        fun createRoute(categoryId: String) = "product_list/$categoryId"
+    object ProductList : Screen("product_list/{categoryId}?title={title}") {
+        fun createRoute(categoryId: String, title: String = "Products") =
+            "product_list/$categoryId?title=${android.net.Uri.encode(title)}"
     }
 
     object Search : Screen("search")
