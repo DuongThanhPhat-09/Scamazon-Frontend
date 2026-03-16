@@ -45,6 +45,7 @@ fun MainScreen(
     val customerBottomNavScreens = listOf(
         Screen.Home.route,
         Screen.Explore.route,
+        Screen.Offer.route,
         Screen.Cart.route,
         Screen.Account.route
     )

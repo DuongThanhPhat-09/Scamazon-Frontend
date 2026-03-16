@@ -3,16 +3,22 @@ package com.example.scamazon_frontend.ui.components
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -43,6 +49,13 @@ open class BottomNavItem(
         unselectedIcon = Icons.Outlined.Search
     )
 
+    object Trends : BottomNavItem(
+        route = "offer",
+        title = "Trends",
+        selectedIcon = Icons.Filled.Whatshot,
+        unselectedIcon = Icons.Filled.Whatshot
+    )
+
     object Cart : BottomNavItem(
         route = "cart",
         title = "Cart",
@@ -58,14 +71,19 @@ open class BottomNavItem(
     )
 }
 
-/**
- * Bottom Navigation Bar - Lafyuu Style
- */
+
+private val NAV_BAR_HEIGHT  = 64.dp
+private val FAB_SIZE        = 54.dp
+private val FAB_OVERHANG    = 20.dp   // how much FAB sticks above the nav bar
+private val TOTAL_HEIGHT    = NAV_BAR_HEIGHT + FAB_OVERHANG
+
+
 @Composable
 fun LafyuuBottomNavBar(
     items: List<BottomNavItem> = listOf(
         BottomNavItem.Home,
         BottomNavItem.Explore,
+        BottomNavItem.Trends,
         BottomNavItem.Cart,
         BottomNavItem.Account
     ),
@@ -74,7 +92,7 @@ fun LafyuuBottomNavBar(
     cartBadgeCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
-    // Bounce animation for badge
+    // Badge bounce animation
     val badgeScale = remember { Animatable(1f) }
     LaunchedEffect(cartBadgeCount) {
         if (cartBadgeCount > 0) {
@@ -89,67 +107,166 @@ fun LafyuuBottomNavBar(
         }
     }
 
-    NavigationBar(
-        modifier = modifier,
-        containerColor = BackgroundWhite,
-        tonalElevation = 8.dp
-    ) {
-        items.forEach { item ->
-            val isSelected = currentRoute == item.route
+    // Split items: [left 2] [center] [right 2]
+    val leftItems  = items.take(2)
+    val centerItem = items.getOrNull(2)
+    val rightItems = items.drop(3)
 
-            NavigationBarItem(
-                selected = isSelected,
-                onClick = { onItemClick(item) },
-                icon = {
-                    if (item == BottomNavItem.Cart && cartBadgeCount > 0) {
-                        BadgedBox(
-                            badge = {
-                                Badge(
-                                    containerColor = AccentGold,
-                                    contentColor = White,
-                                    modifier = Modifier.scale(badgeScale.value)
-                                ) {
-                                    Text(
-                                        text = if (cartBadgeCount > 99) "99+" else cartBadgeCount.toString(),
-                                        fontSize = 10.sp,
-                                        fontFamily = Poppins
-                                    )
-                                }
-                            }
-                        ) {
-                            Icon(
-                                imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                                contentDescription = item.title,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    } else {
-                        Icon(
-                            imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                            contentDescription = item.title,
-                            modifier = Modifier.size(24.dp)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(TOTAL_HEIGHT)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(NAV_BAR_HEIGHT)
+                .align(Alignment.BottomCenter),
+            color = BackgroundWhite,
+            shadowElevation = 10.dp,
+            tonalElevation = 0.dp
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Left items
+                leftItems.forEach { item ->
+                    NavTabItem(
+                        item = item,
+                        isSelected = currentRoute == item.route,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onItemClick(item) }
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    centerItem?.let {
+                        Text(
+                            text = it.title,
+                            fontFamily = Poppins,
+                            fontWeight = if (currentRoute == it.route) FontWeight.SemiBold else FontWeight.Normal,
+                            fontSize = 10.sp,
+                            color = if (currentRoute == it.route) PrimaryBlue else TextSecondary,
+                            modifier = Modifier.padding(bottom = 10.dp)
                         )
                     }
-                },
-                label = {
-                    Text(
-                        text = item.title,
-                        fontFamily = Poppins,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        fontSize = 10.sp
+                }
+
+                // Right items
+                rightItems.forEach { item ->
+                    val isCart = item == BottomNavItem.Cart
+                    NavTabItem(
+                        item = item,
+                        isSelected = currentRoute == item.route,
+                        modifier = Modifier.weight(1f),
+                        cartBadgeCount = if (isCart) cartBadgeCount else 0,
+                        badgeScale = if (isCart) badgeScale.value else 1f,
+                        onClick = { onItemClick(item) }
                     )
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = PrimaryBlue,
-                    selectedTextColor = PrimaryBlue,
-                    unselectedIconColor = TextSecondary,
-                    unselectedTextColor = TextSecondary,
-                    indicatorColor = PrimaryBlueSoft
+                }
+            }
+        }
+
+        centerItem?.let { fab ->
+            val isSelected = currentRoute == fab.route
+            Box(
+                modifier = Modifier
+                    .size(FAB_SIZE)
+                    .align(Alignment.TopCenter)
+                    .shadow(elevation = 8.dp, shape = CircleShape)
+                    .clip(CircleShape)
+                    .background(if (isSelected) PrimaryBlue else PrimaryBlueDark)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { onItemClick(fab) },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = fab.selectedIcon,
+                    contentDescription = fab.title,
+                    tint = Color.White,
+                    modifier = Modifier.size(26.dp)
                 )
-            )
+            }
         }
     }
 }
+
+
+@Composable
+private fun NavTabItem(
+    item: BottomNavItem,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    cartBadgeCount: Int = 0,
+    badgeScale: Float = 1f,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        val iconColor = if (isSelected) PrimaryBlue else TextSecondary
+        val icon = if (isSelected) item.selectedIcon else item.unselectedIcon
+
+        if (cartBadgeCount > 0) {
+            BadgedBox(
+                badge = {
+                    Badge(
+                        containerColor = AccentGold,
+                        contentColor = Color.White,
+                        modifier = Modifier.scale(badgeScale)
+                    ) {
+                        Text(
+                            text = if (cartBadgeCount > 99) "99+" else cartBadgeCount.toString(),
+                            fontSize = 9.sp,
+                            fontFamily = Poppins
+                        )
+                    }
+                }
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = item.title,
+                    tint = iconColor,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        } else {
+            Icon(
+                imageVector = icon,
+                contentDescription = item.title,
+                tint = iconColor,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(3.dp))
+
+        Text(
+            text = item.title,
+            fontFamily = Poppins,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            fontSize = 10.sp,
+            color = iconColor
+        )
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
