@@ -50,6 +50,7 @@ object Dimens {
 
     // Product Card
     val ProductCardWidth = 165.dp
+    val ProductCardHeight = 230.dp
     val ProductCardImageHeight = 133.dp
     val ProductImageSize = 72.dp
 

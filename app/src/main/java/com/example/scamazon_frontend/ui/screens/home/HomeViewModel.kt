@@ -63,22 +63,21 @@ class HomeViewModel(
     private fun fetchFlashSale() {
         viewModelScope.launch {
             _flashSaleState.value = Resource.Loading()
-            // using sorting from backend if available, defaults to 5 items
-            _flashSaleState.value = repository.getProducts(limit = 5, sort = "newest")
+            _flashSaleState.value = repository.getProducts(limit = 5, sort = "created_at", sortOrder = "desc")
         }
     }
 
     private fun fetchMegaSale() {
         viewModelScope.launch {
             _megaSaleState.value = Resource.Loading()
-            _megaSaleState.value = repository.getProducts(limit = 5, sort = "price_asc")
+            _megaSaleState.value = repository.getProducts(limit = 5, sort = "price", sortOrder = "asc")
         }
     }
-    
+
     private fun fetchRecommended() {
         viewModelScope.launch {
             _recommendedState.value = Resource.Loading()
-            _recommendedState.value = repository.getProducts(limit = 10, sort = "popular")
+            _recommendedState.value = repository.getProducts(limit = 10, sort = "sold_count", sortOrder = "desc")
         }
     }
 }
