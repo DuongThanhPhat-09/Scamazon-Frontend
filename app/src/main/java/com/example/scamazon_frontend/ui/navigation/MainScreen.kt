@@ -5,13 +5,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.scamazon_frontend.core.utils.CartCountManager
+import com.example.scamazon_frontend.core.utils.TokenManager
 import com.example.scamazon_frontend.ui.components.BottomNavItem
 import com.example.scamazon_frontend.ui.components.LafyuuBottomNavBar
 
@@ -24,6 +27,16 @@ import com.example.scamazon_frontend.ui.components.LafyuuBottomNavBar
 fun MainScreen(
     navController: NavHostController = rememberNavController()
 ) {
+    val context = LocalContext.current
+    val startDestination = remember {
+        val tokenManager = TokenManager(context)
+        when {
+            tokenManager.getToken() == null -> Screen.Login.route
+            tokenManager.getUserRole() == "admin" -> Screen.AdminDashboard.route
+            else -> Screen.Home.route
+        }
+    }
+
     val cartItemCount by CartCountManager.cartCount.collectAsStateWithLifecycle()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -86,7 +99,7 @@ fun MainScreen(
     ) { innerPadding ->
         NavGraph(
             navController = navController,
-            startDestination = Screen.Login.route,
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         )
     }
