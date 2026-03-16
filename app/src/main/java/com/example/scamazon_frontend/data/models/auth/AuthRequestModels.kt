@@ -13,7 +13,11 @@ data class RegisterRequest(
     @SerializedName("email") val email: String,
     @SerializedName("password") val password: String,
     @SerializedName("fullName") val fullName: String?,
-    @SerializedName("phone") val phone: String?
+    @SerializedName("phone") val phone: String?,
+    @SerializedName("address") val address: String? = null,
+    @SerializedName("city") val city: String? = null,
+    @SerializedName("district") val district: String? = null,
+    @SerializedName("ward") val ward: String? = null
 )
 
 data class ForgotPasswordRequest(
