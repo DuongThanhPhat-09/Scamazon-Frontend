@@ -20,9 +20,14 @@ class CartViewModel(private val repository: CartRepository) : ViewModel() {
     private val _operationMessage = MutableStateFlow<String?>(null)
     val operationMessage: StateFlow<String?> = _operationMessage.asStateFlow()
 
-    init {
-        fetchCart()
-    }
+    // Multi-select state
+    private val _selectedItems = MutableStateFlow<Set<Int>>(emptySet())
+    val selectedItems: StateFlow<Set<Int>> = _selectedItems.asStateFlow()
+
+    private val _isSelectionMode = MutableStateFlow(false)
+    val isSelectionMode: StateFlow<Boolean> = _isSelectionMode.asStateFlow()
+
+    init { fetchCart() }
 
     fun fetchCart() {
         viewModelScope.launch {
@@ -43,9 +48,7 @@ class CartViewModel(private val repository: CartRepository) : ViewModel() {
                     result.data?.let { CartCountManager.updateCount(it.totalItems) }
                     _cartState.value = result
                 }
-                is Resource.Error -> {
-                    _operationMessage.value = result.message
-                }
+                is Resource.Error -> _operationMessage.value = result.message
                 else -> {}
             }
         }
@@ -56,17 +59,61 @@ class CartViewModel(private val repository: CartRepository) : ViewModel() {
             val result = repository.removeCartItem(itemId)
             when (result) {
                 is Resource.Success -> {
+                    _selectedItems.value = _selectedItems.value - itemId
+                    if (_selectedItems.value.isEmpty()) _isSelectionMode.value = false
                     fetchCart()
                 }
-                is Resource.Error -> {
-                    _operationMessage.value = result.message
-                }
+                is Resource.Error -> _operationMessage.value = result.message
                 else -> {}
             }
         }
     }
 
-    fun clearMessage() {
-        _operationMessage.value = null
+    fun clearCart() {
+        viewModelScope.launch {
+            val result = repository.clearCart()
+            when (result) {
+                is Resource.Success -> {
+                    exitSelectionMode()
+                    CartCountManager.updateCount(0)
+                    fetchCart()
+                }
+                is Resource.Error -> _operationMessage.value = result.message
+                else -> {}
+            }
+        }
     }
+
+    fun removeSelectedItems() {
+        val ids = _selectedItems.value.toList()
+        viewModelScope.launch {
+            ids.forEach { id -> repository.removeCartItem(id) }
+            exitSelectionMode()
+            fetchCart()
+        }
+    }
+
+    // ── Selection mode ────────────────────────────────────────────────────────
+
+    fun enterSelectionMode(itemId: Int) {
+        _isSelectionMode.value = true
+        _selectedItems.value = setOf(itemId)
+    }
+
+    fun toggleSelection(itemId: Int) {
+        val current = _selectedItems.value
+        _selectedItems.value = if (itemId in current) current - itemId else current + itemId
+        if (_selectedItems.value.isEmpty()) _isSelectionMode.value = false
+    }
+
+    fun selectAll(itemIds: List<Int>) {
+        _selectedItems.value = itemIds.toSet()
+    }
+
+    fun exitSelectionMode() {
+        _isSelectionMode.value = false
+        _selectedItems.value = emptySet()
+    }
+
+    fun clearMessage() { _operationMessage.value = null }
 }
