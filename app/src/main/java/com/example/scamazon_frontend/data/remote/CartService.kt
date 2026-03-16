@@ -22,4 +22,7 @@ interface CartService {
 
     @DELETE("/api/cart/items/{id}")
     suspend fun removeCartItem(@Path("id") id: Int): Response<ApiResponse<Any>>
+
+    @DELETE("/api/cart")
+    suspend fun clearCart(): Response<ApiResponse<Any>>
 }

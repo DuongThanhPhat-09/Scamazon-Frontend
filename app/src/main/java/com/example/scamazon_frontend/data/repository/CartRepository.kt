@@ -45,6 +45,18 @@ class CartRepository(private val cartService: CartService) {
         }
     }
 
+    suspend fun clearCart(): Resource<Any> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = cartService.clearCart()
+                if (response.isSuccessful) Resource.Success(Unit)
+                else Resource.Error("API Error: ${response.code()}")
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
     private suspend fun <T> safeApiCall(apiCall: suspend () -> Response<ApiResponse<T>>): Resource<T> {
         return withContext(Dispatchers.IO) {
             try {
