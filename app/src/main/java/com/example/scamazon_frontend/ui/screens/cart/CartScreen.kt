@@ -165,7 +165,7 @@ fun CartScreen(
                                     onLongPress = { viewModel.enterSelectionMode(item.id) },
                                     onTap = {
                                         if (isSelectionMode) viewModel.toggleSelection(item.id)
-                                        else onNavigateToProductDetail(item.productId.toString())
+                                        else item.productSlug?.let { onNavigateToProductDetail(it) }
                                     }
                                 )
                                 HorizontalDivider(color = BorderLight, thickness = 0.5.dp)

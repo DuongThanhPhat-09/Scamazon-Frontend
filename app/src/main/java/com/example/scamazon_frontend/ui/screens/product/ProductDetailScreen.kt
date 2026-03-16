@@ -254,11 +254,7 @@ fun ProductDetailScreen(
 
                                 // Stock Status
                                 product.stockStatus?.let { status ->
-                                    Text(
-                                        text = "Stock: $status",
-                                        style = Typography.bodyMedium,
-                                        color = if (status == "in_stock") StatusSuccess else StatusError
-                                    )
+                                    StockBadge(status)
                                     Spacer(modifier = Modifier.height(16.dp))
                                 }
 
@@ -350,7 +346,6 @@ fun ProductDetailScreen(
                                 text = if (isAddingToCart) "Adding..." else "Add To Cart",
                                 onClick = {
                                     viewModel.addToCart(product.id, quantity)
-                                    // Trigger fly animation
                                     showFlyDot = true
                                     coroutineScope.launch {
                                         animProgress.snapTo(0f)
@@ -364,6 +359,7 @@ fun ProductDetailScreen(
                                 enabled = !isAddingToCart,
                                 modifier = Modifier
                                     .padding(Dimens.ScreenPadding)
+                                    .navigationBarsPadding()
                                     .onGloballyPositioned { coordinates ->
                                         val pos = coordinates.positionInRoot()
                                         buttonXPx = pos.x + coordinates.size.width / 2f
@@ -432,7 +428,7 @@ private fun ProductImageSection(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(238.dp)
+            .aspectRatio(1f)
             .background(BackgroundLight)
     ) {
         // Main Image
@@ -512,6 +508,28 @@ private fun ProductImageSection(
         }
     }
 }
+
+@Composable
+private fun StockBadge(status: String) {
+    val (label, icon, bgColor, textColor) = when (status.lowercase()) {
+        "in_stock"    -> Quadruple("Còn hàng",      Icons.Default.CheckCircle,  StatusSuccess.copy(alpha = 0.12f), StatusSuccess)
+        "out_of_stock"-> Quadruple("Hết hàng",      Icons.Default.Cancel,       StatusError.copy(alpha = 0.12f),   StatusError)
+        "low_stock"   -> Quadruple("Còn ít hàng",   Icons.Default.Warning,      AccentGold.copy(alpha = 0.15f),    AccentGold)
+        else          -> Quadruple(status,           Icons.Default.Info,         BorderLight,                       TextSecondary)
+    }
+    Row(
+        modifier = Modifier
+            .background(bgColor, androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(icon, contentDescription = null, tint = textColor, modifier = Modifier.size(14.dp))
+        Text(label, fontFamily = Poppins, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = textColor)
+    }
+}
+
+private data class Quadruple<A,B,C,D>(val first: A, val second: B, val third: C, val fourth: D)
 
 @Composable
 private fun SpecificationRow(

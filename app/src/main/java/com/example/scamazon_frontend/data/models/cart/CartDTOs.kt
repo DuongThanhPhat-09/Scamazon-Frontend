@@ -14,6 +14,7 @@ data class CartItemDto(
     @SerializedName("productId") val productId: Int,
     @SerializedName("productName") val productName: String,
     @SerializedName("productImage") val productImage: String?,
+    @SerializedName("productSlug") val productSlug: String?,
     @SerializedName("price") val price: Double,
     @SerializedName("salePrice") val salePrice: Double?,
     @SerializedName("quantity") val quantity: Int,
