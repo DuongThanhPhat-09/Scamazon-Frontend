@@ -48,6 +48,7 @@ import com.example.scamazon_frontend.ui.screens.order.OrderDetailScreen
 import com.example.scamazon_frontend.ui.screens.order.OrderHistoryScreen
 import com.example.scamazon_frontend.ui.screens.product.ProductDetailScreen
 import com.example.scamazon_frontend.ui.screens.product.ProductListScreen
+import com.example.scamazon_frontend.ui.screens.profile.AboutScreen
 import com.example.scamazon_frontend.ui.screens.profile.AccountScreen
 import com.example.scamazon_frontend.ui.screens.profile.EditProfileScreen
 import com.example.scamazon_frontend.ui.screens.review.ReviewScreen
@@ -178,6 +179,9 @@ fun NavGraph(
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                },
+                onNavigateToAbout = {
+                    navController.navigate(Screen.About.route)
                 }
             )
         }
@@ -515,6 +519,12 @@ fun NavGraph(
 
         composable(route = Screen.Settings.route) {
             PlaceholderScreen(screenName = "Settings")
+        }
+
+        composable(route = Screen.About.route) {
+            AboutScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(route = Screen.Map.route) {

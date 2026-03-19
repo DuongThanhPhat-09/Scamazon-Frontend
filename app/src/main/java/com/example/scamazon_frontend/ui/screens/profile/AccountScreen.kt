@@ -20,6 +20,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -39,10 +42,22 @@ fun AccountScreen(
     onNavigateToSettings: () -> Unit = {},
     onNavigateToChat: () -> Unit = {},
     onNavigateToMap: () -> Unit = {},
-    onNavigateToLogin: () -> Unit = {}
+    onNavigateToLogin: () -> Unit = {},
+    onNavigateToAbout: () -> Unit = {}
 ) {
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.fetchProfile()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     Column(
         modifier = Modifier
@@ -114,20 +129,6 @@ fun AccountScreen(
                 onClick = onNavigateToWishlist
             )
 
-            AccountMenuItem(
-                icon = Icons.Outlined.LocationOn,
-                title = "Address",
-                subtitle = "Manage delivery addresses",
-                onClick = { /* Navigate to address */ }
-            )
-
-            AccountMenuItem(
-                icon = Icons.Outlined.CreditCard,
-                title = "Payment Methods",
-                subtitle = "Manage payment options",
-                onClick = { /* Navigate to payment */ }
-            )
-
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 16.dp),
                 color = BorderLight
@@ -160,24 +161,10 @@ fun AccountScreen(
             )
 
             AccountMenuItem(
-                icon = Icons.Outlined.Settings,
-                title = "Settings",
-                subtitle = "App settings and preferences",
-                onClick = onNavigateToSettings
-            )
-
-            AccountMenuItem(
-                icon = Icons.Outlined.Help,
-                title = "Help Center",
-                subtitle = "Get help and support",
-                onClick = { /* Navigate to help */ }
-            )
-
-            AccountMenuItem(
                 icon = Icons.Outlined.Info,
                 title = "About",
-                subtitle = "App version and info",
-                onClick = { /* Navigate to about */ }
+                subtitle = "Thông tin về ứng dụng & nhóm phát triển",
+                onClick = onNavigateToAbout
             )
 
             Spacer(modifier = Modifier.height(24.dp))

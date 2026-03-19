@@ -73,6 +73,7 @@ sealed class Screen(val route: String) {
     // ==========================================
     // OTHER SCREENS
     // ==========================================
+    object About : Screen("about")
     object Map : Screen("map")
     object Chat : Screen("chat")
     object Review : Screen("review/{productId}/{canWrite}") {

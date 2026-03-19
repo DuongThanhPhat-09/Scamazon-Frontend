@@ -32,7 +32,8 @@ data class OrderSummaryDto(
     @SerializedName("status") val status: String?,
     @SerializedName("itemCount") val itemCount: Int,
     @SerializedName("firstProductImage") val firstProductImage: String?,
-    @SerializedName("createdAt") val createdAt: String?
+    @SerializedName("createdAt") val createdAt: String?,
+    @SerializedName("paymentMethod") val paymentMethod: String?
 )
 
 data class OrderDetailDataDto(
