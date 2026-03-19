@@ -77,7 +77,8 @@ class SearchViewModel(private val productService: ProductService) : ViewModel() 
 
     private fun applySortAndEmit() {
         val sorted = when (_sortBy.value) {
-            "price" -> rawProducts.sortedBy { it.salePrice ?: it.price }
+            "price_asc" -> rawProducts.sortedBy { it.salePrice ?: it.price }
+            "price_desc" -> rawProducts.sortedByDescending { it.salePrice ?: it.price }
             "name" -> rawProducts.sortedBy { it.name.lowercase() }
             "rating" -> rawProducts.sortedByDescending { it.avgRating ?: 0f }
             else -> rawProducts.sortedByDescending { it.id } // "newest"
