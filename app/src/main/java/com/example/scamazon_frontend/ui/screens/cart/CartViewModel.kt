@@ -71,16 +71,13 @@ class CartViewModel(private val repository: CartRepository) : ViewModel() {
 
     fun clearCart() {
         viewModelScope.launch {
-            val result = repository.clearCart()
-            when (result) {
-                is Resource.Success -> {
-                    exitSelectionMode()
-                    CartCountManager.updateCount(0)
-                    fetchCart()
-                }
-                is Resource.Error -> _operationMessage.value = result.message
-                else -> {}
+            val currentItems = (cartState.value as? Resource.Success)?.data?.items ?: return@launch
+            currentItems.forEach { item ->
+                repository.removeCartItem(item.id)
             }
+            exitSelectionMode()
+            CartCountManager.updateCount(0)
+            fetchCart()
         }
     }
 

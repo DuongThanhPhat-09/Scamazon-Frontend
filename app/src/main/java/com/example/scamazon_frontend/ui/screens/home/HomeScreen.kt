@@ -37,11 +37,13 @@ import com.example.scamazon_frontend.data.models.category.CategoryDto
 import com.example.scamazon_frontend.data.models.product.ProductDto
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.screens.favorite.FavoriteViewModel
+import com.example.scamazon_frontend.ui.screens.notification.NotificationViewModel
 
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     favoriteViewModel: FavoriteViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
+    notificationViewModel: NotificationViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateToProductDetail: (String) -> Unit = {},
     onNavigateToCategory: (Int) -> Unit = {},
     onNavigateToProductList: (categoryId: String?, title: String) -> Unit = { _, _ -> },
@@ -59,6 +61,7 @@ fun HomeScreen(
     val megaSaleState by viewModel.megaSaleState.collectAsStateWithLifecycle()
     val recommendedState by viewModel.recommendedState.collectAsStateWithLifecycle()
     val favoriteIds by favoriteViewModel.favoriteIds.collectAsStateWithLifecycle()
+    val unreadNotificationCount by notificationViewModel.unreadCount.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -75,7 +78,7 @@ fun HomeScreen(
             onNotificationClick = onNavigateToNotifications,
             onMapClick = onNavigateToMap,
             onChatClick = onNavigateToChat,
-            notificationBadge = 3
+            notificationBadge = unreadNotificationCount
         )
 
         // Content
