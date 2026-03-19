@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.LocalOffer
@@ -30,12 +32,24 @@ fun NotificationScreen(
     onNavigateBack: () -> Unit = {}
 ) {
     val state by viewModel.notificationsState.collectAsState()
+    val unreadCount by viewModel.unreadCount.collectAsState()
 
     Scaffold(
         topBar = {
             LafyuuTopAppBar(
                 title = "Notifications",
-                onBackClick = onNavigateBack
+                onBackClick = onNavigateBack,
+                actions = {
+                    if (unreadCount > 0) {
+                        IconButton(onClick = { viewModel.markAllAsRead() }) {
+                            Icon(
+                                imageVector = Icons.Default.DoneAll,
+                                contentDescription = "Mark all as read",
+                                tint = PrimaryBlue
+                            )
+                        }
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -71,7 +85,14 @@ fun NotificationScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(notifications) { notif ->
-                            NotificationItem(notif)
+                            NotificationItem(
+                                notif = notif,
+                                onClick = {
+                                    if (notif.isRead == false) {
+                                        viewModel.markAsRead(notif.id)
+                                    }
+                                }
+                            )
                         }
                     }
                 }
@@ -81,10 +102,10 @@ fun NotificationScreen(
 }
 
 @Composable
-private fun NotificationItem(notif: NotificationDto) {
+private fun NotificationItem(notif: NotificationDto, onClick: () -> Unit = {}) {
     val unread = notif.isRead == false
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = if (unread) PrimaryBlueSoft else White
         ),
