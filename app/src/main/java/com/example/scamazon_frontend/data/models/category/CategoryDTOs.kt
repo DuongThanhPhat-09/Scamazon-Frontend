@@ -7,8 +7,7 @@ data class CategoryDto(
     @SerializedName("name") val name: String,
     @SerializedName("slug") val slug: String,
     @SerializedName("description") val description: String?,
-    @SerializedName("image_url") val imageUrl: String?,
-    @SerializedName("parent_id") val parentId: Int?,
-    @SerializedName("is_active") val isActive: Boolean,
-    @SerializedName("created_at") val createdAt: String
+    @SerializedName("imageUrl") val imageUrl: String?,
+    @SerializedName("parentId") val parentId: Int?,
+    @SerializedName("children") val children: List<CategoryDto>? = null
 )
