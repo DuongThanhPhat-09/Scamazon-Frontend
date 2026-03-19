@@ -3,8 +3,10 @@ package com.example.scamazon_frontend.ui.screens.search
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.data.models.category.CategoryDto
 import com.example.scamazon_frontend.data.models.product.ProductDto
 import com.example.scamazon_frontend.data.models.product.ProductPaginationResponse
+import com.example.scamazon_frontend.data.remote.CategoryService
 import com.example.scamazon_frontend.data.remote.ProductService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -13,7 +15,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class SearchViewModel(private val productService: ProductService) : ViewModel() {
+class SearchViewModel(
+    private val productService: ProductService,
+    private val categoryService: CategoryService
+) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -25,12 +30,19 @@ class SearchViewModel(private val productService: ProductService) : ViewModel() 
     private val _sortBy = MutableStateFlow("newest")
     val sortBy: StateFlow<String> = _sortBy.asStateFlow()
 
+    private val _categories = MutableStateFlow<List<CategoryDto>>(emptyList())
+    val categories: StateFlow<List<CategoryDto>> = _categories.asStateFlow()
+
+    private val _selectedCategoryId = MutableStateFlow<Int?>(null)
+    val selectedCategoryId: StateFlow<Int?> = _selectedCategoryId.asStateFlow()
+
     private var searchJob: Job? = null
 
     // Raw unsorted data from API
     private val rawProducts = mutableListOf<ProductDto>()
 
     init {
+        loadCategories()
         searchProducts()
     }
 
@@ -48,6 +60,25 @@ class SearchViewModel(private val productService: ProductService) : ViewModel() 
         applySortAndEmit()
     }
 
+    fun onCategoryChanged(categoryId: Int?) {
+        _selectedCategoryId.value = categoryId
+        searchProducts()
+    }
+
+    private fun loadCategories() {
+        viewModelScope.launch {
+            try {
+                val response = categoryService.getCategories()
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body != null && body.success && body.data != null) {
+                        _categories.value = body.data
+                    }
+                }
+            } catch (_: Exception) { }
+        }
+    }
+
     fun searchProducts() {
         viewModelScope.launch {
             _products.value = Resource.Loading()
@@ -55,7 +86,8 @@ class SearchViewModel(private val productService: ProductService) : ViewModel() 
                 val response = productService.getProducts(
                     page = 1,
                     limit = 50,
-                    search = _searchQuery.value.ifBlank { null }
+                    search = _searchQuery.value.ifBlank { null },
+                    categoryId = _selectedCategoryId.value
                 )
                 if (response.isSuccessful) {
                     val body = response.body()

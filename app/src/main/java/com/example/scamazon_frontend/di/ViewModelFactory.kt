@@ -98,8 +98,9 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
         // Phase 3 ViewModels
         if (modelClass.isAssignableFrom(SearchViewModel::class.java)) {
             val productService = retrofit.create(ProductService::class.java)
+            val categoryService = retrofit.create(CategoryService::class.java)
             @Suppress("UNCHECKED_CAST")
-            return SearchViewModel(productService) as T
+            return SearchViewModel(productService, categoryService) as T
         }
 
         if (modelClass.isAssignableFrom(CheckoutViewModel::class.java)) {
