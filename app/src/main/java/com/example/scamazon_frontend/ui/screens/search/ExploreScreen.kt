@@ -7,9 +7,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
@@ -56,6 +58,8 @@ fun ExploreScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val productsState by viewModel.products.collectAsStateWithLifecycle()
     val sortBy by viewModel.sortBy.collectAsStateWithLifecycle()
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
+    val selectedCategoryId by viewModel.selectedCategoryId.collectAsStateWithLifecycle()
     var showSortSheet by remember { mutableStateOf(false) }
 
     // Entrance animation
@@ -107,6 +111,48 @@ fun ExploreScreen(
                 .alpha(searchBarAlpha)
                 .focusRequester(focusRequester)
         )
+
+        // Category filter chips
+        if (categories.isNotEmpty()) {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .alpha(contentAlpha)
+            ) {
+                item {
+                    FilterChip(
+                        selected = selectedCategoryId == null,
+                        onClick = { viewModel.onCategoryChanged(null) },
+                        label = {
+                            Text("All", fontFamily = Poppins, fontSize = 12.sp)
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = PrimaryBlueSoft,
+                            selectedLabelColor = PrimaryBlue
+                        )
+                    )
+                }
+                items(categories) { category ->
+                    FilterChip(
+                        selected = selectedCategoryId == category.id,
+                        onClick = {
+                            viewModel.onCategoryChanged(
+                                if (selectedCategoryId == category.id) null else category.id
+                            )
+                        },
+                        label = {
+                            Text(category.name, fontFamily = Poppins, fontSize = 12.sp)
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = PrimaryBlueSoft,
+                            selectedLabelColor = PrimaryBlue
+                        )
+                    )
+                }
+            }
+        }
 
         // Sort bar + result count
         Row(
