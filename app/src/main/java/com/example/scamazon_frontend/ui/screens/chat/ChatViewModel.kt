@@ -28,10 +28,8 @@ class ChatViewModel(
     init {
         viewModelScope.launch {
             signalRManager.chatEvents.collect { newMessage ->
-                val currentList = _messagesState.value.data?.toMutableList() ?: mutableListOf()
-                if (currentList.none { it.id == newMessage.id }) {
-                    currentList.add(newMessage)
-                    _messagesState.value = Resource.Success(currentList.sortedBy { it.createdAt })
+                if (newMessage.chatRoomId == currentRoomId) {
+                    addMessageToList(newMessage)
                 }
             }
         }

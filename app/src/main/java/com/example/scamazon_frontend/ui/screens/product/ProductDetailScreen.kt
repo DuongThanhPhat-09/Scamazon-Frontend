@@ -58,12 +58,21 @@ fun ProductDetailScreen(
 
     val productState by viewModel.productState.collectAsStateWithLifecycle()
     val addToCartState by viewModel.addToCartState.collectAsStateWithLifecycle()
+    val cartQuantityForProduct by viewModel.cartQuantityForProduct.collectAsStateWithLifecycle()
     val favoriteIds by favoriteViewModel.favoriteIds.collectAsStateWithLifecycle()
     val cartCount by CartCountManager.cartCount.collectAsStateWithLifecycle()
 
     // Load product on first composition
     LaunchedEffect(productId) {
         viewModel.loadProduct(productId)
+    }
+
+    // Load cart quantity khi product load xong
+    LaunchedEffect(productState) {
+        if (productState is Resource.Success) {
+            val id = productState.data?.id ?: return@LaunchedEffect
+            viewModel.loadCartQuantityForProduct(id)
+        }
     }
 
     // ── Fly-to-cart animation state ──
@@ -96,6 +105,15 @@ fun ProductDetailScreen(
     LaunchedEffect(addToCartState) {
         when (addToCartState) {
             is Resource.Success -> {
+                showFlyDot = true
+                coroutineScope.launch {
+                    animProgress.snapTo(0f)
+                    animProgress.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(durationMillis = 1200)
+                    )
+                    showFlyDot = false
+                }
                 snackbarHostState.showSnackbar("Đã thêm vào giỏ hàng!")
                 viewModel.resetAddToCartState()
             }
@@ -270,11 +288,12 @@ fun ProductDetailScreen(
                                         color = TextPrimary
                                     )
 
+                                    val stockQty = product.stockQuantity ?: 0
+                                    val maxAddable = (stockQty - cartQuantityForProduct).coerceAtLeast(0)
                                     QuantitySelector(
                                         quantity = quantity,
                                         onIncrease = {
-                                            val maxQty = product.stockQuantity ?: 99
-                                            if (quantity < maxQty) quantity++
+                                            if (quantity < maxAddable) quantity++
                                         },
                                         onDecrease = { if (quantity > 1) quantity-- }
                                     )
@@ -342,21 +361,19 @@ fun ProductDetailScreen(
                             color = White
                         ) {
                             val isAddingToCart = addToCartState is Resource.Loading
+                            val stockQty = product.stockQuantity ?: 0
+                            val isOutOfStock = stockQty <= 0
+                            val buttonEnabled = !isAddingToCart && !isOutOfStock
                             LafyuuPrimaryButton(
-                                text = if (isAddingToCart) "Adding..." else "Add To Cart",
-                                onClick = {
-                                    viewModel.addToCart(product.id, quantity)
-                                    showFlyDot = true
-                                    coroutineScope.launch {
-                                        animProgress.snapTo(0f)
-                                        animProgress.animateTo(
-                                            targetValue = 1f,
-                                            animationSpec = tween(durationMillis = 1200)
-                                        )
-                                        showFlyDot = false
-                                    }
+                                text = when {
+                                    isOutOfStock -> "Hết hàng"
+                                    isAddingToCart -> "Adding..."
+                                    else -> "Add To Cart"
                                 },
-                                enabled = !isAddingToCart,
+                                onClick = {
+                                    viewModel.addToCart(product.id, quantity, stockQty)
+                                },
+                                enabled = buttonEnabled,
                                 modifier = Modifier
                                     .padding(Dimens.ScreenPadding)
                                     .navigationBarsPadding()
