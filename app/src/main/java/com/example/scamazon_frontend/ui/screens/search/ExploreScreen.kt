@@ -131,7 +131,8 @@ fun ExploreScreen(
 
             // Sort chip
             val sortLabel = when (sortBy) {
-                "price" -> "Price ↑"
+                "price_asc" -> "Price ↑"
+                "price_desc" -> "Price ↓"
                 "name" -> "Name"
                 "rating" -> "Rating"
                 else -> "Newest"
@@ -376,7 +377,8 @@ private fun ExploreSortSheet(
 ) {
     val sortOptions = listOf(
         "newest" to "Newest",
-        "price"  to "Price: Low to High",
+        "price_asc"  to "Price: Low to High",
+        "price_desc" to "Price: High to Low",
         "rating" to "Highest Rated",
         "name"   to "Name: A–Z"
     )
