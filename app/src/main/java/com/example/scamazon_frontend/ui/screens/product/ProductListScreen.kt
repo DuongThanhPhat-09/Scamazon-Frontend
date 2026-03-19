@@ -33,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.admin.BrandDto
+import com.example.scamazon_frontend.data.models.category.CategoryDto
 import com.example.scamazon_frontend.data.models.product.ProductDto
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
@@ -52,6 +53,7 @@ fun ProductListScreen(
     val currentPage by viewModel.currentPage.collectAsStateWithLifecycle()
     val totalPages by viewModel.totalPages.collectAsStateWithLifecycle()
     val brands by viewModel.brands.collectAsStateWithLifecycle()
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
 
     var showSortSheet by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
@@ -93,6 +95,7 @@ fun ProductListScreen(
         FilterBottomSheet(
             currentFilter = currentFilter,
             brands = brands,
+            categories = categories,
             onApply = { filter ->
                 viewModel.setFilter(filter)
                 showFilterSheet = false
@@ -126,6 +129,7 @@ fun ProductListScreen(
             ActiveFilterChips(
                 filter = currentFilter,
                 brands = brands,
+                categories = categories,
                 onClearAll = { viewModel.clearFilter() }
             )
         }
@@ -238,7 +242,8 @@ private fun SortFilterBar(
 ) {
     val sortLabel = when (currentSort) {
         "newest" -> "Newest"
-        "price" -> "Price"
+        "price_asc" -> "Price ↑"
+        "price_desc" -> "Price ↓"
         "name" -> "Name"
         "rating" -> "Rating"
         else -> "Sort"
@@ -339,12 +344,19 @@ private fun SortFilterBar(
 private fun ActiveFilterChips(
     filter: ProductFilter,
     brands: List<BrandDto>,
+    categories: List<CategoryDto>,
     onClearAll: () -> Unit
 ) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        filter.categoryId?.let { cid ->
+            val catName = categories.find { it.id == cid }?.name ?: "Category"
+            item {
+                FilterActiveChip(label = catName)
+            }
+        }
         filter.brandId?.let { bid ->
             val brandName = brands.find { it.id == bid }?.name ?: "Brand"
             item {
@@ -411,7 +423,8 @@ private fun SortBottomSheet(
 ) {
     val sortOptions = listOf(
         "newest" to "Newest",
-        "price" to "Price",
+        "price_asc" to "Price: Low to High",
+        "price_desc" to "Price: High to Low",
         "name" to "Name",
         "rating" to "Rating"
     )
@@ -481,11 +494,13 @@ private fun SortBottomSheet(
 private fun FilterBottomSheet(
     currentFilter: ProductFilter,
     brands: List<BrandDto>,
+    categories: List<CategoryDto>,
     onApply: (ProductFilter) -> Unit,
     onDismiss: () -> Unit
 ) {
     // Local draft state — only applied on "Apply"
     var selectedBrandId by remember { mutableStateOf(currentFilter.brandId) }
+    var selectedCategoryId by remember { mutableStateOf(currentFilter.categoryId) }
     var minPriceText by remember { mutableStateOf(currentFilter.minPrice?.toLong()?.toString() ?: "") }
     var maxPriceText by remember { mutableStateOf(currentFilter.maxPrice?.toLong()?.toString() ?: "") }
     var selectedRating by remember { mutableStateOf(currentFilter.minRating) }
@@ -520,11 +535,47 @@ private fun FilterBottomSheet(
                 )
                 TextButton(onClick = {
                     selectedBrandId = null
+                    selectedCategoryId = null
                     minPriceText = ""
                     maxPriceText = ""
                     selectedRating = null
                 }) {
                     Text("Reset", color = SecondaryRed, fontFamily = Poppins)
+                }
+            }
+
+            // Category Section
+            if (categories.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Category",
+                        fontFamily = Poppins,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        color = TextPrimary
+                    )
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(categories) { category ->
+                            val isSelected = selectedCategoryId == category.id
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    selectedCategoryId = if (isSelected) null else category.id
+                                },
+                                label = {
+                                    Text(
+                                        text = category.name,
+                                        fontFamily = Poppins,
+                                        fontSize = 12.sp
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = PrimaryBlueSoft,
+                                    selectedLabelColor = PrimaryBlue
+                                )
+                            )
+                        }
+                    }
                 }
             }
 
@@ -651,6 +702,7 @@ private fun FilterBottomSheet(
                     onApply(
                         ProductFilter(
                             brandId = selectedBrandId,
+                            categoryId = selectedCategoryId,
                             minPrice = minPriceText.toLongOrNull()?.toDouble(),
                             maxPrice = maxPriceText.toLongOrNull()?.toDouble(),
                             minRating = selectedRating

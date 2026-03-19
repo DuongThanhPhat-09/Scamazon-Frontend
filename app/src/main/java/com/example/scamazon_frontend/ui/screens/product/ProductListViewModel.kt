@@ -16,11 +16,12 @@ import com.example.scamazon_frontend.core.network.SignalRManager
 
 data class ProductFilter(
     val brandId: Int? = null,
+    val categoryId: Int? = null,
     val minPrice: Double? = null,
     val maxPrice: Double? = null,
     val minRating: Int? = null
 ) {
-    val activeCount: Int get() = listOfNotNull(brandId, minPrice, maxPrice, minRating).size
+    val activeCount: Int get() = listOfNotNull(brandId, categoryId, minPrice, maxPrice, minRating).size
     val isEmpty: Boolean get() = activeCount == 0
 }
 
@@ -40,6 +41,9 @@ class ProductListViewModel(
 
     private val _brands = MutableStateFlow<List<BrandDto>>(emptyList())
     val brands: StateFlow<List<BrandDto>> = _brands.asStateFlow()
+
+    private val _categories = MutableStateFlow<List<com.example.scamazon_frontend.data.models.category.CategoryDto>>(emptyList())
+    val categories: StateFlow<List<com.example.scamazon_frontend.data.models.category.CategoryDto>> = _categories.asStateFlow()
 
     private val _currentPage = MutableStateFlow(1)
     val currentPage: StateFlow<Int> = _currentPage.asStateFlow()
@@ -62,6 +66,7 @@ class ProductListViewModel(
             }
         }
         loadBrands()
+        loadCategories()
     }
 
     fun init(categoryId: Int?) {
@@ -106,6 +111,15 @@ class ProductListViewModel(
         }
     }
 
+    private fun loadCategories() {
+        viewModelScope.launch {
+            when (val result = repository.getCategories()) {
+                is Resource.Success -> _categories.value = result.data ?: emptyList()
+                else -> {}
+            }
+        }
+    }
+
     private fun fetchProducts(reset: Boolean) {
         fetchJob?.cancel()
         fetchJob = viewModelScope.launch {
@@ -116,10 +130,11 @@ class ProductListViewModel(
             }
 
             val filter = _currentFilter.value
+            val effectiveCategoryId = filter.categoryId ?: categoryId
             val result = repository.getProducts(
                 page = _currentPage.value,
                 limit = 20,
-                categoryId = categoryId,
+                categoryId = effectiveCategoryId,
                 brandId = filter.brandId,
                 minPrice = filter.minPrice,
                 maxPrice = filter.maxPrice,
@@ -147,7 +162,8 @@ class ProductListViewModel(
 
     private fun applySortAndEmit() {
         val sorted = when (_currentSort.value) {
-            "price" -> allProducts.sortedBy { it.salePrice ?: it.price }
+            "price_asc" -> allProducts.sortedBy { it.salePrice ?: it.price }
+            "price_desc" -> allProducts.sortedByDescending { it.salePrice ?: it.price }
             "name" -> allProducts.sortedBy { it.name.lowercase() }
             "rating" -> allProducts.sortedByDescending { it.avgRating ?: 0f }
             else -> allProducts.sortedByDescending { it.id } // "newest"
