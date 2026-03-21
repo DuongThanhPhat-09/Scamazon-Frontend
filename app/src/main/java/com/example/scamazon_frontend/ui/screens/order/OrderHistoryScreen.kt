@@ -100,7 +100,6 @@ fun OrderHistoryScreen(
                     ) {
                         items(orders, key = { it.id }) { order ->
                             val isPending = order.status?.lowercase() == "pending"
-                                && order.paymentMethod?.lowercase() == "vnpay"
                             OrderCard(
                                 order = order,
                                 isPending = isPending,
