@@ -3,38 +3,21 @@ package com.example.scamazon_frontend.di
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.scamazon_frontend.core.network.RetrofitClient
-import com.example.scamazon_frontend.core.utils.TokenManager
-import com.example.scamazon_frontend.data.remote.AdminService
-import com.example.scamazon_frontend.data.remote.AuthService
-import com.example.scamazon_frontend.data.remote.BrandService
-import com.example.scamazon_frontend.data.remote.CartService
-import com.example.scamazon_frontend.data.remote.CategoryService
-import com.example.scamazon_frontend.data.remote.OrderService
-import com.example.scamazon_frontend.data.remote.PaymentService
-import com.example.scamazon_frontend.data.remote.ProductService
-import com.example.scamazon_frontend.data.remote.ProfileService
-import com.example.scamazon_frontend.data.remote.ReviewService
-import com.example.scamazon_frontend.data.repository.AdminRepository
-import com.example.scamazon_frontend.data.repository.AuthRepository
-import com.example.scamazon_frontend.data.repository.CartRepository
-import com.example.scamazon_frontend.data.repository.HomeRepository
-import com.example.scamazon_frontend.data.repository.OrderRepository
-import com.example.scamazon_frontend.data.repository.ProductRepository
-import com.example.scamazon_frontend.data.repository.ProfileRepository
-import com.example.scamazon_frontend.data.repository.ReviewRepository
-import com.example.scamazon_frontend.data.remote.FavoriteService
-import com.example.scamazon_frontend.data.repository.FavoriteRepository
 import com.example.scamazon_frontend.ui.screens.admin.category.AdminCategoryViewModel
+import com.example.scamazon_frontend.ui.screens.admin.chat.AdminChatDetailViewModel
+import com.example.scamazon_frontend.ui.screens.admin.chat.AdminChatListViewModel
 import com.example.scamazon_frontend.ui.screens.admin.dashboard.AdminDashboardViewModel
 import com.example.scamazon_frontend.ui.screens.admin.order.AdminOrderViewModel
 import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductViewModel
 import com.example.scamazon_frontend.ui.screens.auth.AuthViewModel
 import com.example.scamazon_frontend.ui.screens.cart.CartViewModel
+import com.example.scamazon_frontend.ui.screens.chat.ChatViewModel
 import com.example.scamazon_frontend.ui.screens.checkout.CheckoutViewModel
 import com.example.scamazon_frontend.ui.screens.checkout.PaymentQRViewModel
 import com.example.scamazon_frontend.ui.screens.favorite.FavoriteViewModel
 import com.example.scamazon_frontend.ui.screens.home.HomeViewModel
+import com.example.scamazon_frontend.ui.screens.notification.NotificationViewModel
+import com.example.scamazon_frontend.ui.screens.offer.TrendsViewModel
 import com.example.scamazon_frontend.ui.screens.order.OrderHistoryViewModel
 import com.example.scamazon_frontend.ui.screens.product.ProductDetailViewModel
 import com.example.scamazon_frontend.ui.screens.product.ProductListViewModel
@@ -42,184 +25,98 @@ import com.example.scamazon_frontend.ui.screens.profile.ProfileViewModel
 import com.example.scamazon_frontend.ui.screens.review.ReviewViewModel
 import com.example.scamazon_frontend.ui.screens.search.SearchViewModel
 
-class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
+/**
+ * ViewModelFactory that delegates to [ServiceLocator] for cached service/repository instances.
+ *
+ * Benefits over the old implementation:
+ * - Services and repositories are created once and cached (lazy singletons)
+ * - No duplicate service/repository creation per ViewModel
+ * - Easier to add new ViewModels (just add one mapping line)
+ * - Cleaner, more maintainable code
+ */
+class ViewModelFactory(context: Context) : ViewModelProvider.Factory {
+
+    init {
+        // Ensure ServiceLocator is initialized (safe to call multiple times)
+        ServiceLocator.init(context)
+    }
+
+    private val sl = ServiceLocator
+
+    @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val retrofit = RetrofitClient.getClient(context)
-        val signalRManager = com.example.scamazon_frontend.core.network.SignalRManager.getInstance(context)
+        return when {
+            // ─── Auth ────────────────────────────────────────────────────
+            modelClass.isAssignableFrom(AuthViewModel::class.java) ->
+                AuthViewModel(sl.authRepository, sl.tokenManager, sl.authService)
 
-        if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
-            val authService = retrofit.create(AuthService::class.java)
-            val authRepository = AuthRepository(authService)
-            val tokenManager = TokenManager(context)
-            @Suppress("UNCHECKED_CAST")
-            return AuthViewModel(authRepository, tokenManager, authService) as T
-        }
+            // ─── Home & Product List ─────────────────────────────────────
+            modelClass.isAssignableFrom(HomeViewModel::class.java) ->
+                HomeViewModel(sl.homeRepository, sl.signalRManager)
 
-        if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
-            val productService = retrofit.create(ProductService::class.java)
-            val categoryService = retrofit.create(CategoryService::class.java)
-            val homeRepository = HomeRepository(productService, categoryService)
-            @Suppress("UNCHECKED_CAST")
-            return HomeViewModel(homeRepository, signalRManager) as T
-        }
+            modelClass.isAssignableFrom(ProductListViewModel::class.java) ->
+                ProductListViewModel(sl.homeRepository, sl.signalRManager)
 
-        if (modelClass.isAssignableFrom(ProductListViewModel::class.java)) {
-            val productService = retrofit.create(ProductService::class.java)
-            val categoryService = retrofit.create(CategoryService::class.java)
-            val brandService = retrofit.create(BrandService::class.java)
-            val homeRepository = HomeRepository(productService, categoryService, brandService)
-            @Suppress("UNCHECKED_CAST")
-            return ProductListViewModel(homeRepository, signalRManager) as T
-        }
+            modelClass.isAssignableFrom(ProductDetailViewModel::class.java) ->
+                ProductDetailViewModel(sl.productRepository, sl.cartRepository)
 
-        if (modelClass.isAssignableFrom(ProductDetailViewModel::class.java)) {
-            val productService = retrofit.create(ProductService::class.java)
-            val cartService = retrofit.create(CartService::class.java)
-            val productRepository = ProductRepository(productService)
-            val cartRepository = CartRepository(cartService)
-            @Suppress("UNCHECKED_CAST")
-            return ProductDetailViewModel(productRepository, cartRepository) as T
-        }
+            // ─── Cart & Checkout ─────────────────────────────────────────
+            modelClass.isAssignableFrom(CartViewModel::class.java) ->
+                CartViewModel(sl.cartRepository)
 
-        if (modelClass.isAssignableFrom(CartViewModel::class.java)) {
-            val cartService = retrofit.create(CartService::class.java)
-            val cartRepository = CartRepository(cartService)
-            @Suppress("UNCHECKED_CAST")
-            return CartViewModel(cartRepository) as T
-        }
+            modelClass.isAssignableFrom(CheckoutViewModel::class.java) ->
+                CheckoutViewModel(sl.orderRepository, sl.profileRepository)
 
-        if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
-            val profileService = retrofit.create(ProfileService::class.java)
-            val profileRepository = ProfileRepository(profileService)
-            @Suppress("UNCHECKED_CAST")
-            return ProfileViewModel(profileRepository) as T
-        }
+            modelClass.isAssignableFrom(PaymentQRViewModel::class.java) ->
+                PaymentQRViewModel(sl.paymentService)
 
-        // Phase 3 ViewModels
-        if (modelClass.isAssignableFrom(SearchViewModel::class.java)) {
-            val productService = retrofit.create(ProductService::class.java)
-            val categoryService = retrofit.create(CategoryService::class.java)
-            @Suppress("UNCHECKED_CAST")
-            return SearchViewModel(productService, categoryService) as T
-        }
+            modelClass.isAssignableFrom(OrderHistoryViewModel::class.java) ->
+                OrderHistoryViewModel(sl.orderRepository, sl.signalRManager)
 
-        if (modelClass.isAssignableFrom(CheckoutViewModel::class.java)) {
-            val orderService = retrofit.create(OrderService::class.java)
-            val orderRepository = OrderRepository(orderService)
-            val profileService = retrofit.create(ProfileService::class.java)
-            val profileRepository = ProfileRepository(profileService)
-            @Suppress("UNCHECKED_CAST")
-            return CheckoutViewModel(orderRepository, profileRepository) as T
-        }
+            // ─── Profile & Favorites ─────────────────────────────────────
+            modelClass.isAssignableFrom(ProfileViewModel::class.java) ->
+                ProfileViewModel(sl.profileRepository)
 
-        if (modelClass.isAssignableFrom(OrderHistoryViewModel::class.java)) {
-            val orderService = retrofit.create(OrderService::class.java)
-            val orderRepository = OrderRepository(orderService)
-            @Suppress("UNCHECKED_CAST")
-            return OrderHistoryViewModel(orderRepository, signalRManager) as T
-        }
+            modelClass.isAssignableFrom(FavoriteViewModel::class.java) ->
+                FavoriteViewModel(sl.favoriteRepository)
 
-        // Admin ViewModels
-        if (modelClass.isAssignableFrom(AdminDashboardViewModel::class.java)) {
-            val adminService = retrofit.create(AdminService::class.java)
-            val productService = retrofit.create(ProductService::class.java)
-            val categoryService = retrofit.create(CategoryService::class.java)
-            val brandService = retrofit.create(BrandService::class.java)
-            val adminRepository = AdminRepository(adminService, productService, categoryService, brandService)
-            @Suppress("UNCHECKED_CAST")
-            return AdminDashboardViewModel(adminRepository, signalRManager) as T
-        }
+            modelClass.isAssignableFrom(ReviewViewModel::class.java) ->
+                ReviewViewModel(sl.reviewRepository)
 
-        if (modelClass.isAssignableFrom(AdminProductViewModel::class.java)) {
-            val adminService = retrofit.create(AdminService::class.java)
-            val productService = retrofit.create(ProductService::class.java)
-            val categoryService = retrofit.create(CategoryService::class.java)
-            val brandService = retrofit.create(BrandService::class.java)
-            val adminRepository = AdminRepository(adminService, productService, categoryService, brandService)
-            @Suppress("UNCHECKED_CAST")
-            return AdminProductViewModel(adminRepository, productService, signalRManager) as T
-        }
+            // ─── Search & Trends ─────────────────────────────────────────
+            modelClass.isAssignableFrom(SearchViewModel::class.java) ->
+                SearchViewModel(sl.productService, sl.categoryService)
 
-        if (modelClass.isAssignableFrom(AdminCategoryViewModel::class.java)) {
-            val adminService = retrofit.create(AdminService::class.java)
-            val productService = retrofit.create(ProductService::class.java)
-            val categoryService = retrofit.create(CategoryService::class.java)
-            val brandService = retrofit.create(BrandService::class.java)
-            val adminRepository = AdminRepository(adminService, productService, categoryService, brandService)
-            @Suppress("UNCHECKED_CAST")
-            return AdminCategoryViewModel(adminRepository) as T
-        }
+            modelClass.isAssignableFrom(TrendsViewModel::class.java) ->
+                TrendsViewModel(sl.homeRepository, sl.signalRManager)
 
-        if (modelClass.isAssignableFrom(AdminOrderViewModel::class.java)) {
-            val adminService = retrofit.create(AdminService::class.java)
-            val productService = retrofit.create(ProductService::class.java)
-            val categoryService = retrofit.create(CategoryService::class.java)
-            val brandService = retrofit.create(BrandService::class.java)
-            val adminRepository = AdminRepository(adminService, productService, categoryService, brandService)
-            @Suppress("UNCHECKED_CAST")
-            return AdminOrderViewModel(adminRepository, signalRManager) as T
-        }
+            // ─── Chat & Notifications ────────────────────────────────────
+            modelClass.isAssignableFrom(ChatViewModel::class.java) ->
+                ChatViewModel(sl.chatRepository, sl.signalRManager)
 
-        if (modelClass.isAssignableFrom(PaymentQRViewModel::class.java)) {
-            val paymentService = retrofit.create(PaymentService::class.java)
-            @Suppress("UNCHECKED_CAST")
-            return PaymentQRViewModel(paymentService) as T
-        }
+            modelClass.isAssignableFrom(NotificationViewModel::class.java) ->
+                NotificationViewModel(sl.notificationRepository, sl.signalRManager)
 
-        if (modelClass.isAssignableFrom(ReviewViewModel::class.java)) {
-            val reviewService = retrofit.create(ReviewService::class.java)
-            val reviewRepository = ReviewRepository(reviewService)
-            @Suppress("UNCHECKED_CAST")
-            return ReviewViewModel(reviewRepository) as T
-        }
+            // ─── Admin ───────────────────────────────────────────────────
+            modelClass.isAssignableFrom(AdminDashboardViewModel::class.java) ->
+                AdminDashboardViewModel(sl.adminRepository, sl.signalRManager)
 
-        if (modelClass.isAssignableFrom(FavoriteViewModel::class.java)) {
-            val favoriteService = retrofit.create(FavoriteService::class.java)
-            val favoriteRepository = FavoriteRepository(favoriteService)
-            @Suppress("UNCHECKED_CAST")
-            return FavoriteViewModel(favoriteRepository) as T
-        }
+            modelClass.isAssignableFrom(AdminProductViewModel::class.java) ->
+                AdminProductViewModel(sl.adminRepository, sl.productService, sl.signalRManager)
 
-        if (modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.offer.TrendsViewModel::class.java)) {
-            val productService = retrofit.create(ProductService::class.java)
-            val categoryService = retrofit.create(CategoryService::class.java)
-            val homeRepository = HomeRepository(productService, categoryService)
-            @Suppress("UNCHECKED_CAST")
-            return com.example.scamazon_frontend.ui.screens.offer.TrendsViewModel(homeRepository, signalRManager) as T
-        }
+            modelClass.isAssignableFrom(AdminCategoryViewModel::class.java) ->
+                AdminCategoryViewModel(sl.adminRepository)
 
-        // Milestone 4 ViewModels
-        if (modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.chat.ChatViewModel::class.java)) {
-            val chatService = retrofit.create(com.example.scamazon_frontend.data.remote.ChatService::class.java)
-            val uploadService = retrofit.create(com.example.scamazon_frontend.data.remote.UploadService::class.java)
-            val chatRepository = com.example.scamazon_frontend.data.repository.ChatRepository(chatService, uploadService)
-            @Suppress("UNCHECKED_CAST")
-            return com.example.scamazon_frontend.ui.screens.chat.ChatViewModel(chatRepository, signalRManager) as T
-        }
+            modelClass.isAssignableFrom(AdminOrderViewModel::class.java) ->
+                AdminOrderViewModel(sl.adminRepository, sl.signalRManager)
 
-        if (modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.admin.chat.AdminChatListViewModel::class.java)) {
-            val chatService = retrofit.create(com.example.scamazon_frontend.data.remote.ChatService::class.java)
-            val uploadService = retrofit.create(com.example.scamazon_frontend.data.remote.UploadService::class.java)
-            val chatRepository = com.example.scamazon_frontend.data.repository.ChatRepository(chatService, uploadService)
-            @Suppress("UNCHECKED_CAST")
-            return com.example.scamazon_frontend.ui.screens.admin.chat.AdminChatListViewModel(chatRepository) as T
-        }
+            modelClass.isAssignableFrom(AdminChatListViewModel::class.java) ->
+                AdminChatListViewModel(sl.chatRepository)
 
-        if (modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.admin.chat.AdminChatDetailViewModel::class.java)) {
-            val chatService = retrofit.create(com.example.scamazon_frontend.data.remote.ChatService::class.java)
-            val uploadService = retrofit.create(com.example.scamazon_frontend.data.remote.UploadService::class.java)
-            val chatRepository = com.example.scamazon_frontend.data.repository.ChatRepository(chatService, uploadService)
-            @Suppress("UNCHECKED_CAST")
-            return com.example.scamazon_frontend.ui.screens.admin.chat.AdminChatDetailViewModel(chatRepository, signalRManager) as T
-        }
+            modelClass.isAssignableFrom(AdminChatDetailViewModel::class.java) ->
+                AdminChatDetailViewModel(sl.chatRepository, sl.signalRManager)
 
-        if (modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.notification.NotificationViewModel::class.java)) {
-            val notificationService = retrofit.create(com.example.scamazon_frontend.data.remote.NotificationService::class.java)
-            val notificationRepository = com.example.scamazon_frontend.data.repository.NotificationRepository(notificationService)
-            @Suppress("UNCHECKED_CAST")
-            return com.example.scamazon_frontend.ui.screens.notification.NotificationViewModel(notificationRepository, signalRManager) as T
-        }
-
-        throw IllegalArgumentException("Unknown ViewModel class")
+            else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+        } as T
     }
 }

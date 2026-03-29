@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import com.example.scamazon_frontend.core.utils.CartBadgeNotificationHelper
 import com.example.scamazon_frontend.core.utils.CartCountManager
+import com.example.scamazon_frontend.di.ServiceLocator
 import com.example.scamazon_frontend.ui.navigation.MainScreen
 import com.example.scamazon_frontend.ui.theme.BackgroundWhite
 import com.example.scamazon_frontend.ui.theme.ScamazonFrontendTheme
@@ -33,6 +34,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Initialize ServiceLocator with application context (one-time setup)
+        ServiceLocator.init(applicationContext)
+
         enableEdgeToEdge()
 
         // Xin quyền hiển thị thông báo cho Android 13+ (API 33+)
