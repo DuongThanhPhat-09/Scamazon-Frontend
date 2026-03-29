@@ -1,6 +1,7 @@
 package com.example.scamazon_frontend.data.repository
 
-import com.example.scamazon_frontend.core.network.ApiResponse
+import com.example.scamazon_frontend.core.network.safeApiCall
+import com.example.scamazon_frontend.core.network.safeApiCallMessage
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.auth.AuthResponse
 import com.example.scamazon_frontend.data.models.auth.ForgotPasswordRequest
@@ -9,10 +10,6 @@ import com.example.scamazon_frontend.data.models.auth.RegisterRequest
 import com.example.scamazon_frontend.data.models.auth.ResetPasswordRequest
 import com.example.scamazon_frontend.data.models.auth.VerifyOtpRequest
 import com.example.scamazon_frontend.data.remote.AuthService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
-import retrofit2.Response
 
 class AuthRepository(private val apiService: AuthService) {
 
@@ -25,104 +22,14 @@ class AuthRepository(private val apiService: AuthService) {
     }
 
     suspend fun forgotPassword(request: ForgotPasswordRequest): Resource<String> {
-        return safeApiCallNoData { apiService.forgotPassword(request) }
+        return safeApiCallMessage { apiService.forgotPassword(request) }
     }
 
     suspend fun verifyOtp(request: VerifyOtpRequest): Resource<String> {
-        return safeApiCallNoData { apiService.verifyOtp(request) }
+        return safeApiCallMessage { apiService.verifyOtp(request) }
     }
 
     suspend fun resetPassword(request: ResetPasswordRequest): Resource<String> {
-        return safeApiCallNoData { apiService.resetPassword(request) }
-    }
-
-    // Helper method to safely extract generic ApiResponse
-    private suspend fun <T> safeApiCall(apiCall: suspend () -> Response<ApiResponse<T>>): Resource<T> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = apiCall()
-                if (response.isSuccessful) {
-                    val body = response.body()
-                    if (body != null && body.success) {
-                        if (body.data != null) {
-                            Resource.Success(body.data)
-                        } else {
-                            Resource.Error(body.message ?: "No data found")
-                        }
-                    } else {
-                        Resource.Error(body?.message ?: "Unknown error")
-                    }
-                } else {
-                    var errorMsg = "API Error: ${response.code()}"
-                    response.errorBody()?.string()?.let {
-                        try {
-                            val json = JSONObject(it)
-                            
-                            // Check for validation errors object (ASP.NET ValidationProblemDetails)
-                            var specificErrorMsg: String? = null
-                            val errorsObj = json.optJSONObject("errors") ?: json.optJSONObject("Errors")
-                            
-                            if (errorsObj != null) {
-                                val keys = errorsObj.keys()
-                                if (keys.hasNext()) {
-                                    val firstKey = keys.next()
-                                    val messagesArray = errorsObj.optJSONArray(firstKey)
-                                    if (messagesArray != null && messagesArray.length() > 0) {
-                                        val fieldMsg = messagesArray.optString(0)
-                                        if (fieldMsg.isNotEmpty()) specificErrorMsg = fieldMsg
-                                    }
-                                }
-                            }
-                            
-                            // Get generic message or title
-                            val genericMsg = json.optString("message")
-                                .ifEmpty { json.optString("Message") }
-                                .ifEmpty { json.optString("title") }
-                            
-                            // Use specific error if available, else fallback to generic message
-                            if (!specificErrorMsg.isNullOrEmpty()) {
-                                errorMsg = specificErrorMsg
-                            } else if (genericMsg.isNotEmpty()) {
-                                errorMsg = genericMsg
-                            }
-                        } catch (e: Exception) {
-                            // Fallback to HTTP code
-                        }
-                    }
-                    Resource.Error(errorMsg)
-                }
-            } catch (e: Exception) {
-                Resource.Error(e.message ?: "Network error occurred")
-            }
-        }
-    }
-
-    // For endpoints that return success/message but no data
-    private suspend fun <T> safeApiCallNoData(apiCall: suspend () -> Response<ApiResponse<T>>): Resource<String> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = apiCall()
-                if (response.isSuccessful) {
-                    val body = response.body()
-                    if (body != null && body.success) {
-                        Resource.Success(body.message ?: "Thành công")
-                    } else {
-                        Resource.Error(body?.message ?: "Có lỗi xảy ra")
-                    }
-                } else {
-                    var errorMsg = "Lỗi: ${response.code()}"
-                    response.errorBody()?.string()?.let {
-                        try {
-                            val json = JSONObject(it)
-                            val msg = json.optString("message").ifEmpty { json.optString("Message") }
-                            if (msg.isNotEmpty()) errorMsg = msg
-                        } catch (e: Exception) { /* fallback */ }
-                    }
-                    Resource.Error(errorMsg)
-                }
-            } catch (e: Exception) {
-                Resource.Error(e.message ?: "Network error occurred")
-            }
-        }
+        return safeApiCallMessage { apiService.resetPassword(request) }
     }
 }
